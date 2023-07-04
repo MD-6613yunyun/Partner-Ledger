@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+</head>
+<body>
+
+        <div class="m-3">
+            <div class="filters">
+                <div class="dropdown" >
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Account Type
+                    </button>
+                    <div class="dropdown-menu" style="font-size: 13px;width: 20px;">
+                        <div class="form-check">
+                            <input class="form-check-input m-1" type="checkbox" id="payCheckBox" value="option1">
+                            <label class="form-check-label" for="checkbox1">
+                            Payable
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input m-1" type="checkbox" id="recvCheckBox" value="option2">
+                            <label class="form-check-label" for="checkbox2">
+                            Receivable
+                            </label>
+                        </div>                
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <button class="btn btn-secondary button-74 text-white" type="button"  id="recOrunrec" onclick="reconcile(this)">
+                    Show All Entries
+                </button>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Account Status
+                    </button>
+                    <div class="dropdown-menu" style="font-size: 13px;width: 20px;">
+                        <div class="form-check">
+                            <input class="form-check-input m-1" type="checkbox" id="postCheckBox" value="option1">
+                            <label class="form-check-label" for="checkbox1">
+                            Posted
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input m-1" type="checkbox" id="draftCheckBox" value="option2">
+                            <label class="form-check-label" for="checkbox2">
+                            Unposted
+                            </label>
+                        </div>                
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" shopID="False" id="bi" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Business Unit
+                    </button>
+                    <div class="dropdown-menu business-unit" style="font-size: 13px;width: 20px;">
+                        <input type="text" size="17"  style="margin-left: 10px;" onkeyup="getShops(this)"/>
+                        <div style="max-height: 150px;overflow-y: auto;display: none;">
+                            <p class="m-1 ms-2" shopID="['19','Agriculture Unit (Machine)']" onclick="assignShop(this)">Agriculture Unit (Machine)</p>
+                            <p class="m-1 ms-2" shopID="['20','Agriculture Unit (Plantation)']" onclick="assignShop(this)">Agriculture Unit (Plantation)</p>
+                            <p class="m-1 ms-2" shopID="['38','Agriculture Unit - Cocoa (Thai)']" onclick="assignShop(this)">Agriculture Unit - Cocoa (Thai)</p>
+                            <p class="m-1 ms-2" shopID="['37','Agriculture Unit - Cocoa (Waw)']" onclick="assignShop(this)">Agriculture Unit - Cocoa (Waw)</p>
+                            <p class="m-1 ms-2" shopID="['36','Agriculture Unit - Fertilizer']" onclick="assignShop(this)">Agriculture Unit - Fertilizer</p>
+                            <p class="m-1 ms-2" shopID="['31','Auto Parts Unit']" onclick="assignShop(this)">Auto Parts Unit</p>
+                            <p class="m-1 ms-2" shopID="['39','Auto Parts Unit_MDY']" onclick="assignShop(this)">Auto Parts Unit_MDY</p>
+                            <p class="m-1 ms-2" shopID="['40','Auto Parts Unit_PYAY']" onclick="assignShop(this)">Auto Parts Unit_PYAY</p>
+                            <p class="m-1 ms-2" shopID="['22','Construction MMM']" onclick="assignShop(this)">Construction MMM</p>
+                            <p class="m-1 ms-2" shopID="['21','Construction Project Unit']" onclick="assignShop(this)">Construction Project Unit</p>
+                            <p class="m-1 ms-2" shopID="['34','Construction TMS']" onclick="assignShop(this)">Construction TMS</p>
+                            <p class="m-1 ms-2" shopID="['30','Extra Unit']" onclick="assignShop(this)">Extra Unit</p>
+                            <p class="m-1 ms-2" shopID="['29','Head Office']" onclick="assignShop(this)">Head Office</p>
+                            <p class="m-1 ms-2" shopID="['28','Hydropower Unit']" onclick="assignShop(this)">Hydropower Unit</p>
+                            <p class="m-1 ms-2" shopID="['26','Logistics']" onclick="assignShop(this)">Logistics</p>
+                            <p class="m-1 ms-2" shopID="['25','Machinery Rental Service']" onclick="assignShop(this)">Machinery Rental Service</p>
+                            <p class="m-1 ms-2" shopID="['27','Machinery Service & Parts']" onclick="assignShop(this)">Machinery Service & Parts</p>
+                            <p class="m-1 ms-2" shopID="['23','Mining']" onclick="assignShop(this)">Mining</p>
+                            <p class="m-1 ms-2" shopID="['35','Other']" onclick="assignShop(this)">Other</p>
+                            <p class="m-1 ms-2" shopID="['33','Pit & Go']" onclick="assignShop(this)">Pit & Go</p>
+                            <p class="m-1 ms-2" shopID="['32','Toyota Car Showroom']" onclick="assignShop(this)">Toyota Car Showroom</p>
+                            <p class="m-1 ms-2" shopID="['1','Mudon Maung Maung']" onclick="assignShop(this)">Mudon Maung Maung</p>                               
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" id="pc" shopID="False" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Project Code
+                    </button>
+                    <div class="dropdown-menu business-unit" style="font-size: 13px;width: 20px;">
+                        <input type="text" size="17" style="margin-left: 10px;" onkeyup="getShops(this)"/>
+                        <div style="max-height: 150px;overflow-y: auto;display: none;">
+                            {% for data in pj_codes %}
+                            <p class="m-1 ms-2" shopID="{{data[0]}}" onclick="assignShop(this)">{{data[1]}}</p>
+                            {% endfor %}                                
+                        </div>                                 
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" id="shop" shopID="False" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Shop
+                    </button>
+                    <div class="dropdown-menu business-unit" style="font-size: 13px;width: 20px;">
+                        <input type="text" size="17" style="margin-left: 10px;" onkeyup="getShops(this)"/>
+                        <div style="max-height: 150px;overflow-y: auto; display: none;">
+                            <p class="m-1 ms-2" shopID="['33','MANDALAY']" onclick="assignShop(this)">MANDALAY</p>  
+                            <p class="m-1 ms-2" shopID="['16','SHWEPYITHAR (HEAD OFFICE)']" onclick="assignShop(this)">SHWEPYITHAR (HEAD OFFICE)</p> 
+                            <p class="m-1 ms-2" shopID="['17','BAYINTNAUNG']" onclick="assignShop(this)">BAYINTNAUNG</p> 
+                            <p class="m-1 ms-2" shopID="['18','SANCHAUNG']" onclick="assignShop(this)">SANCHAUNG</p> 
+                            <p class="m-1 ms-2" shopID="['19','THINGANGYUN']" onclick="assignShop(this)">THINGANGYUN</p>
+                            <p class="m-1 ms-2" shopID="['20','AUNGMINGALAR']" onclick="assignShop(this)">AUNGMINGALAR</p> 
+                            <p class="m-1 ms-2" shopID="['21','NAYPYITAW']" onclick="assignShop(this)">NAYPYITAW</p>  
+                            <p class="m-1 ms-2" shopID="['22','MONYWA']" onclick="assignShop(this)">MONYWA</p>  
+                            <p class="m-1 ms-2" shopID="['23','TAUNGGYI']" onclick="assignShop(this)">TAUNGGYI</p> 
+                            <p class="m-1 ms-2" shopID="['24','PIT & GO BGO']" onclick="assignShop(this)">PIT & GO BGO</p> 
+                            <p class="m-1 ms-2" shopID="['25','PIT & GO SKP']" onclick="assignShop(this)">PIT & GO SKP</p> 
+                            <p class="m-1 ms-2" shopID="['26','PIT & GO BAWGA']" onclick="assignShop(this)">PIT & GO BAWGA</p>
+                            <p class="m-1 ms-2" shopID="['27','TYOYTA BAWGA']" onclick="assignShop(this)">TYOYTA BAWGA</p> 
+                            <p class="m-1 ms-2" shopID="['32','PYAY']" onclick="assignShop(this)">PYAY</p>  
+                            <p class="m-1 ms-2" shopID="['28','Other Shop 13']" onclick="assignShop(this)">Other Shop 13</p> 
+                            <p class="m-1 ms-2" shopID="['29','Other Shop 14']" onclick="assignShop(this)">Other Shop 14</p> 
+                            <p class="m-1 ms-2" shopID="['30','Other Shop 15']" onclick="assignShop(this)">Other Shop 15</p> 
+                            <p class="m-1 ms-2" shopID="['31','Other Shop 16']" onclick="assignShop(this)">Other Shop 16</p>                                    
+                        </div>                                    
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" id="ptn" shopID="False" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Partner
+                    </button>
+                    <div class="dropdown-menu business-unit" style="font-size: 13px;width: 20px;">
+                        <input type="text" size="17" style="margin-left: 10px;" onkeyup="getShops(this)"/>
+                        <div style="max-height: 150px;overflow-y: auto;display: none;">
+                            {% for data in res %}
+                            <p class="m-1 ms-2" shopID="['{{data[0]}}','{{data[1]}}']" onclick="assignShop(this)">{{data[1]}}</p>
+                            {% endfor %}                                
+                        </div>                                 
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" id="changeDate" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Date
+                    </button>
+                    <div class="dropdown-menu business-unit" style="font-size: 13px;width: 20px;">
+                        <p class="m-1 ms-2" onclick="dateChange(this)">Today</p> 
+                        <p class="m-1 ms-2" onclick="dateChange(this)">This week</p> 
+                        <p class="m-1 ms-2" onclick="dateChange(this)">This Month</p>  
+                        <p class="m-1 ms-2" onclick="dateChange(this)">This Year</p> 
+
+                        <input type="text" id="date-range-picker" size="17" style="margin-left: 10px;"/>                                   
+                    </div>
+                </div>
+            </div>
+            <div class="filters">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle button-74 text-white" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="width: 20px;"></button>
+                    <div class="dropdown-menu business-unit" style="font-size: 13px;">
+                        <p class="m-1 ms-2" onclick="getData(this,'normal')">Get Data</p>  
+                        <p class="m-1 ms-2"  onclick="getData(this,'excel')">Get Report Excel</p> 
+                        <p class="m-1 ms-2" onclick="getData(this,'pdf')">Get Report PDF</p>                                  
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="container" id="partnerTable">
+
+            <h2 class="header-partner text-center">MUDON MAUNG MAUNG</h2>
+            <div>
+                <h4 class="" style="display: inline-block;">Partner Ledger</h4>
+                <h4 class="" style="float: right;"></h4>
+            </div>
+
+
+            <div class="table-responsive table-container">
+              <table class="table table-hover partner-table">
+                <thead>
+                  <tr class="table-light" style="position: sticky;top: 0;font-size: 14px;">
+                    <th>Partner Name</th>
+                    <th class="text-end">Initial Balance</th>
+                    <th class="text-end">Debit</th>
+                    <th class="text-end">Credit</th>
+                    <th class="text-end">Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    
+                </tbody>
+                </table>
+                </div>
+            </div>
+
+            <div class="spinner" id="spinner" style="display: none;">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <h1>😎</h1>
+            </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+        <script type="text/javascript">
+            console.log("Hello")
+            tableBody = document.getElementById("dataTableBody");
+            let namePtn = document.getElementById("namePtn");
+            let partnersArr = {};
+            $(document).ready(function() {
+                $('#date-range-picker').daterangepicker();
+            });
+
+            function reconcile(btn){
+                if (btn.innerText == 'Show All Entries'){
+                    btn.innerText = "Only show unreconciled entries"
+                }else{
+                    btn.innerText = "Show All Entries"
+                }
+            }
+            function getShops(inp){
+                dropperDiv = inp.nextElementSibling
+                if (inp.value.length !== 0){
+                    dropperDiv.style.display = "";
+                }else{
+                    dropperDiv.style.display = "none";
+                }
+                filter = inp.value.toUpperCase();
+                let a = dropperDiv.getElementsByTagName("p");
+                for (let i = 0; i < a.length; i++) {
+                    let txtValue = a[i].textContent || a[i].innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    a[i].style.display = "";
+                    } else {
+                    a[i].style.display = "none";
+                    }
+                }
+            }
+            function assignShop(btn){
+                let idd = btn.getAttribute('shopID')
+                btn.parentElement.parentElement.previousElementSibling.innerText = btn.innerText
+                btn.parentElement.parentElement.previousElementSibling.setAttribute('shopID',idd)
+            }
+            function dateChange(btn){
+                btn.parentElement.previousElementSibling.innerText = btn.innerText
+            }
+            function getData(btn,para){
+                pay = document.getElementById('payCheckBox')
+                recev = document.getElementById('recvCheckBox')
+                post = document.getElementById('postCheckBox')
+                draft = document.getElementById('draftCheckBox')
+                rec = document.getElementById("recOrunrec").innerText.trim()
+                bi = document.getElementById("bi").getAttribute("shopID")
+                pc = document.getElementById("pc").getAttribute("shopID")
+                ptn = document.getElementById("ptn").getAttribute("shopID").replace(/\//g, "~")
+                shop = document.getElementById('shop').getAttribute("shopID")
+                date = document.getElementById('changeDate')
+                let rangeDate = dataForm = ""
+                if (date.innerText.trim() == 'Date'){
+                    rangeDate = date.nextElementSibling.children[4].value
+                }else{
+                    rangeDate = date.innerText.trim()
+                }
+                if (bi === 'False'){
+                    alert("Business Unit must be assigned..")
+                }else if (pay.checked == false && recev.checked == false){
+                    alert("Report must be either payable or receiveable..")
+                }else if (post.checked == false && draft.checked == false){
+                    alert("Report must be either posted or unposted...")
+                }else if(ptn == "False"){
+                    alert("Partners must be chosen for the report...")
+                }
+                else{
+                    let blurr = document.getElementById("partnerTable")
+                    let spin = document.getElementById("spinner")
+
+                    spin.style.display = ""
+                    blurr.classList.add("demo")
+                    tableBody.innerHTML = ""
+
+                    rangeDate = rangeDate.replace(/\//g, "~")
+                    dataForm = `${pay.checked}@${recev.checked}@${post.checked}@${draft.checked}@${rec}@${bi}@${pc}@${shop}@${ptn}@${rangeDate}`
+                    if (para == "normal"){
+                        fetch(`/get-data/${dataForm}`)
+                        .then(response => response.json())
+                        .then(data => { 
+                            Object.entries(data).forEach(([key, value]) => {
+                                var modifiedStr = key.replace(/'/g, '"');
+                                var ptn = JSON.parse(modifiedStr);
+                                let total_db = parseFloat("0.00")
+                                let total_cd = parseFloat("0.00")
+                                let fstIniBal = parseFloat(ptn[2])
+                                test_html = `<tr onclick="fun(this)" style="font-size:13px" dataHide="${ptn[0]}" dataAttr="parentRow" class="partners" id="${ptn[0]}">
+                                                <td id="ptnName">${ptn[1]}</td>
+                                                <td class="num">${fstIniBal.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
+                                                <td class="num">$500</td>
+                                                <td class="num">$0</td>
+                                                <td class="num">$500</td>
+                                            </tr>
+                                            <tr hidden dataHide="${ptn[0]}" dataAttr="parentRow">
+                                                <td colspan="12">
+                                                    <table class="table">
+                                                        <tbody >
+                                                            <table class="table table-hover partner-table">
+                                                                <thead>
+                                                                    <tr class="table-light" style="position: sticky;top: 0;font-size:14px">
+                                                                        <th>Date</th>
+                                                                        <th>JRNL</th>
+                                                                        <th>Account</th>
+                                                                        <th>Ref</th>
+                                                                        <th>Due Date</th>
+                                                                        <th>Matching Number</th>
+                                                                        <th>Ex. Rate</th>
+                                                                        <th>Amount Currency</th>
+                                                                        <th>Initial Balance</th>
+                                                                        <th>Debit</th>
+                                                                        <th>Credit</th>
+                                                                        <th>Balance</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody class="${ptn[0]}">
+                                                                    
+                                                                </tbody>
+                                                        </tbody>
+                                                    </table>
+                                                </td>
+                                            </tr>`
+                                tableBody.innerHTML += test_html
+                                tsubBody = document.getElementsByClassName(ptn[0])
+                                value.sort((a, b) => new Date(a.date) - new Date(b.date));
+                                for (const dt of value){
+                                    dbt = parseFloat(dt['debit'])
+                                    cdt = parseFloat(dt['credit'])
+                                    tsubBody[0].innerHTML += ` <tr style="font-size:13px">
+                                                                <td>${dt['date']}</td>
+                                                                <td>${dt['id'][1].charAt(0).toUpperCase() + dt['id'][1].slice(1)}</td>
+                                                                <td>${dt['account_id']}</td>
+                                                                <td>${dt['id'][0]}</td>
+                                                                <td>${dt['date_maturity']}</td>
+                                                                <td>${dt['matching_number']}</td>
+                                                                <td class="num">${dt['exchange_rate'].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</td>
+                                                                <td class="num">${dt['currency_id']}</td>
+                                                                <td class="num chng" >Some Value</td>
+                                                                <td class="num chng" >${dbt.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} </td>
+                                                                <td class="num chng" >${cdt.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} </td>
+                                                                <td class="num chng">Some Value</td>
+                                                            </tr>`
+                                    total_db += dbt
+                                    total_cd += cdt
+                                }
+                                let initBalJn = fstIniBal;
+                                tdLists = tsubBody[0].getElementsByClassName('chng')
+                                for (let i = 0;i < (tdLists.length/4);i++){
+                                    idx = i * 4
+                                    tdLists[0 + idx].innerText = `${initBalJn.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`
+                                    dbt = parseFloat(tdLists[1 + idx].innerText.replace(/[^0-9.-]+/g, ""))
+                                    cdt = parseFloat(tdLists[2 + idx].innerText.replace(/[^0-9.-]+/g, ""))
+                                    initBalJn = (initBalJn + dbt) - cdt
+                                    tdLists[3 + idx].innerText = `${initBalJn.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`
+                                }
+                                trData = document.getElementById(ptn[0])
+                                trData.children[2].innerText = total_db.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })
+                                trData.children[3].innerText = total_cd.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })
+
+                                trData.children[4].innerText = ((fstIniBal + total_db) - total_cd).toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 }) + 'K'
+                                partnersArr[ptn[1]] = ptn[0]
+                            });
+                            spin.style.display = "none"
+                            blurr.classList.remove("demo")
+                        })
+                        .catch(error => {console.log(error)})
+                    }else if (para == "excel"){
+                        fetch(`/get-excel-partner/${dataForm}`)
+                        .then(response => response.blob())
+                        .then(blob => { 
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'PartnerLedger.xlsx';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            spin.style.display = "none"
+                            blurr.classList.remove("demo")
+                        })
+                        .catch(error => {console.log(error)})
+                    }else{
+                        console.log("pdf");
+                        fetch(`/get-pdf-partner/${dataForm}`)
+                        .then(response => response.blob())
+                        .then(blob => { 
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = 'PartnerLedger.pdf';
+                            a.click();
+                            URL.revokeObjectURL(url);
+                            spin.style.display = "none"
+                            blurr.classList.remove("demo")
+                        })
+                        .catch(error => {console.log(error)})
+                    }
+                }
+
+                // if (para == 'normal'){
+
+                // }else if (para == 'excel'){
+
+                // }else{
+
+                // }
+            }
+
+            function fun(tableRow){
+                if (tableRow.nextElementSibling.getAttribute('hidden') !== null){
+                    tableRow.nextElementSibling.removeAttribute('hidden')
+                }else{
+                    tableRow.nextElementSibling.setAttribute('hidden','')
+                }
+            }
+        </script>
+    </body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Wide Columns Table with Bootstrap Class and Striped Styling</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .table-container {
+      max-width: 1600px; /* Specify the desired width here */
+      max-height: 1000px;
+    }
+    th,td{
+      white-space: nowrap;
+    }
+
+    .form__field {
+    font-family: inherit;
+    width: 100%;
+    border: 0;
+    border-bottom: 2px solid #9b9b9b;
+    outline: 0;
+    font-size: 1.3rem;
+    color: #000000;
+    padding: 7px 0;
+    background: transparent;
+    transition: border-color 0.2s;
+    }
+    .form__field::placeholder {
+      color: transparent;
+    }
+  .form__field:placeholder-shown ~ .form__label {
+    font-size: 1.3rem;
+    cursor: text;
+    top: 20px;
+  }
+
+  .form__label {
+    position: absolute;
+    top: 0;
+    display: block;
+    transition: 0.2s;
+    font-size: 1rem;
+    color: #9b9b9b;
+  }
+
+  .form__field:focus {
+    padding-bottom: 6px;
+    font-weight: 700;
+    border-width: 3px;
+    border-image: linear-gradient(to right, #15197f, #06053b);
+    border-image-slice: 1;
+  }
+  .form__field:focus ~ .form__label {
+    position: absolute;
+    top: 0;
+    display: block;
+    transition: 0.2s;
+    font-size: 1rem;
+    color: #0f184c;
+    font-weight: 700;
+  }
+
+  /* reset input */
+  .form__field:required, .form__field:invalid {
+    box-shadow: none;
+  }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Wide Columns Table</h1>
+    <div class="table-responsive table-container">
+      <table class="table table-hover partner-table">
+        <thead>
+          <tr class="table-light" style="position: sticky;top: 0;">
+            <th></th>
+            <th>JRNL</th>
+            <th>Account</th>
+            <th>Ref</th>
+            <th>Due Date</th>
+            <th>Matching Number</th>
+            <th>Initial Balance</th>
+            <th>Debit</th>
+            <th>Credit</th>
+            <th>Amount Currency</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr onclick="fun(this)">
+            <td>Hello Hello Hello Hello Hello</td>
+            <td colspan="5"></td>
+            <td>$1000</td>
+            <td>$500</td>
+            <td>$0</td>
+            <td></td>
+            <td>$500</td>
+          </tr>
+          <tr hidden>
+            <td colspan="12">
+              <table class="table">
+                <tbody>
+                  <tr class="" style="position: sticky;top: 0;">
+                    <td>2023 13 3</td>
+                    <td>Test</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                  </tr>
+                  <tr class="" style="position: sticky;top: 0;">
+                    <td>2023 13 3</td>
+                    <td dataAttr="parentRow">Test</td>
+                    <td dataAttr="parentRow">Some Value</td>
+                    <td dataAttr="parentRow">Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                    <td>Some Value</td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="form-outline">
+    <input type="text" id="formTextExample1" class="form-control" aria-describedby="textExample1" />
+    <label class="form-label" for="formTextExample1">Example label</label>
+  </div>
+  <div id="textExample1" class="form-text">
+    We'll never share your email with anyone else.
+  </div>
+
+  <!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop">
+  Launch static backdrop modal
+</button>
+
+<!-- Modal -->
+    <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <input type="input" class="form__field" placeholder="Name" name="name" id='name' required onkeyup="findParners(this)" />
+            <label for="name" class="form__label">Name</label>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Understood</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let tableDiv = document.getElementById('partner-table')
+    let arr = {
+        "Partner One" : 123,
+        "Partner Two" : 345
+      }
+    function fun(tableRow){
+
+      // cls = tableRow.children[0].innerText
+      // hiddenTr = document.getElementsByClassName(cls)
+      // console.log(hiddenTr[0].style.display)
+      // if (hiddenTr[0].style.display != "none"){
+      //   hiddenTr[0].style.display = "none"
+      // }else{
+      //   hiddenTr[0].style.display = "block"
+      // }
+      if (tableRow.nextElementSibling.getAttribute('hidden') !== null){
+        console.log("test")
+        tableRow.nextElementSibling.removeAttribute('hidden')
+      }else{
+        tableRow.nextElementSibling.setAttribute('hidden','')
+      }
+      
+    }
+    var val = 123232.126;
+    console.log(val.toLocaleString('en-US'))
+    console.log(typeof(val))
+    console.log(val.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 }));
+
+    function findParners(inp){
+     console.log(inp.value)
+     filter = inp.value.toUpperCase() 
+     console.log(inp.value.trim().length)
+     if (inp.value.trim() != ""){
+      for (const key in arr){
+        if (key.toUpperCase().indexOf(filter) > -1){
+          console.log(key)
+        }
+        
+      }
+    }
+    }
+    sth = document.querySelectorAll("td[dataAttr='parentRow']")
+    console.log(sth)
+  </script>
+</body>
+</html>
