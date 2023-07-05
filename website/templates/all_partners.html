@@ -370,18 +370,11 @@
                                 let total_db = parseFloat("0.00")
                                 let total_cd = parseFloat("0.00")
                                 let fstIniBal = parseFloat(ptn[2])
-                                let clicker = ""
-                                if (value.length == 0){
-                                    clicker = ""
-                                }  else {
-                                    clicker = "fun(this)"
-                                }
-                                console.log(ptn[2],ptn[3],ptn[4],ptn[5])
-                                console.log(typeof(ptn[2]),typeof(ptn[3]),typeof(ptn[4]),typeof(ptn[5]))
-                                overallInit += ptn[2]
-                                overallDb += ptn[3]
-                                overallCd += ptn[4]
-                                overallBal += ptn[5]
+                                let clicker = value.length == 0 ? "" : "fun(this)";
+                                overallInit += typeof(ptn[2]) == typeof(12) ? ptn[2] : Number(ptn[2].replace(/,/g,''))
+                                overallDb += typeof(ptn[3]) == typeof(12) ? ptn[3] : Number(ptn[3].replace(/,/g,''))
+                                overallCd += typeof(ptn[4]) == typeof(12) ? ptn[4] : Number(ptn[4].replace(/,/g,''))
+                                overallBal += typeof(ptn[5]) == typeof(12) ? ptn[5] : Number(ptn[5].replace(/,/g,''))
                                 test_html = `<tr onclick="${clicker}" dataAttr='parentRow'  id="${ptn[0]}">
                                                 <td id="ptnName">${ptn[1]}</td>
                                                 <td class="num">${ptn[2].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
@@ -444,8 +437,7 @@
                             
                             let dateShowDiv = document.getElementById("header-date")
                             dateShowDiv.innerText = rangeDate
-                            console.log(overallDisplayer.children)
-                            console.log(overallInit, overallDb, overallCd, overallBal)
+
                             overallDisplayer.children[1].innerText = `${overallInit.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
                             overallDisplayer.children[2].innerText = `${overallDb.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
                             overallDisplayer.children[3].innerText = `${overallCd.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
@@ -483,14 +475,6 @@
                         .catch(error => {console.log(error)})
                     }
                 }
-
-                // if (para == 'normal'){
-
-                // }else if (para == 'excel'){
-
-                // }else{
-
-                // }
             }
 
             function fun(tableRow){

@@ -174,10 +174,11 @@ def get_each_journals(info):
         overallBal += bal
         final_result[str(temp)] = lines_result
         bal, temp, total_db, total_cd = 0,0,0.0,0.0
-    final_result.update(get_all_results(include_transaction_lst,f"{where_clause}acc.date < '{start_date}'"))
+    dct , var = get_all_results(include_transaction_lst,f"{where_clause}acc.date < '{start_date}'")
+    final_result.update(dct)
     cursor.close()
     conn.close()
-    return final_result,start_date,end_date,shop,ownID,["{0:,.2f} K".format(overallInit),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal)]
+    return final_result,start_date,end_date,shop,ownID,["{0:,.2f} K".format(overallInit+var),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal+var)]
 
 def get_all_results(explict_tuple,where_clause):
     query = """
@@ -202,13 +203,15 @@ def get_all_results(explict_tuple,where_clause):
     cursor.execute(query)
     data = cursor.fetchall()
     final_init_result = {}
+    initBal = 0.0
     for dt in data:
         cus_name = dt[0].replace("'","&lsquo;")
-        key = str([dt[1],cus_name,"{:,.2f} ".format(dt[2]),'0.00','0.00',"{:,.2f} ".format(dt[2])])
+        initBal += float(dt[2])
+        key = str([dt[1],cus_name,"{:,.2f}".format(dt[2]),'0.00','0.00',"{:,.2f}".format(dt[2])])
         final_init_result[key] = []
     cursor.close()
     conn.close()
-    return final_init_result
+    return final_init_result, initBal
 
 def get_table_data_for_excel_pdf(variable,pdf=False):
     conn = db_connection()
