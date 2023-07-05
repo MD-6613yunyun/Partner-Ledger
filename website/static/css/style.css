@@ -49,7 +49,7 @@ th,td{
     color:blue;
 }
 
-.header-partner  { color: #000000; font-family: 'Trocchi', serif; font-weight: bold; line-height: 48px; margin-bottom: 10; }
+.header-partner { color: #000000; font-family: 'Trocchi', serif; font-weight: bold; line-height: 48px; margin-bottom: 10; }
 
 @media (min-width: 768px) {
     .button-74 {
@@ -244,4 +244,9 @@ th,td{
 
 #header-date{
   float: right;
+}
+
+.overall{
+  background-color: #0b114b;
+  color: #1400ac;
 }

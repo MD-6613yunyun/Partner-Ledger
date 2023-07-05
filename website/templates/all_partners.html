@@ -211,16 +211,23 @@
             <div class="table-responsive table-container">
               <table class="table table-hover partner-table">
                 <thead>
-                  <tr class="table-light" style="position: sticky;top: 0;">
+                  <tr class="table-secondary" style="position: sticky;top: 0;">
                     <th>Partner Name</th>
                     <th class="text-end">Initial Balance</th>
                     <th class="text-end">Debit</th>
                     <th class="text-end">Credit</th>
                     <th class="text-end">Balance</th>
                   </tr>
+                  <tr class="table-dark" id="overall-displayer">
+                    <th class="text-start">Overall</th>
+                    <th class="text-end" >0.00 K</th>
+                    <th class="text-end">0.00 K</th>
+                    <th class="text-end">0.00 K</th>
+                    <th class="text-end" >0.00 K</th>
+                    </tr>
                 </thead>
                 <tbody id="dataTableBody">
-                    
+
                 </tbody>
               </table>
             </div>
@@ -273,6 +280,7 @@
             tableBody = document.getElementById("dataTableBody");
             let ptnList = document.getElementById("partner-list");
             let namePtn = document.getElementById("namePtn");
+            let overallDisplayer = document.getElementById("overall-displayer")
             let partnersArr = {};
             $(document).ready(function() {
                 $('#date-range-picker').daterangepicker();
@@ -331,7 +339,7 @@
                     rangeDate = date.innerText.trim()
                 }
                 console.log(own,typeof(own))
-                if (bi === 'False'){
+                if (bi == 'False' && own == "False"){
                     alert("Business Unit must be assigned..")
                 }else if (pay.checked == false && recev.checked == false){
                     alert("Report must be either payable or receiveable..")
@@ -351,6 +359,11 @@
                         fetch(`/get-data-all/${dataForm}`)
                         .then(response => response.json())
                         .then(data => {
+                            let overallInit , overallDb , overallCd , overallBal
+                            overallInit = 0
+                            overallDb = 0
+                            overallCd = 0
+                            overallBal = 0
                             Object.entries(data).forEach(([key, value]) => {
                                 var modifiedStr = key.replace(/'/g, '"');
                                 var ptn = JSON.parse(modifiedStr);
@@ -358,12 +371,17 @@
                                 let total_cd = parseFloat("0.00")
                                 let fstIniBal = parseFloat(ptn[2])
                                 let clicker = ""
-                                
                                 if (value.length == 0){
                                     clicker = ""
                                 }  else {
                                     clicker = "fun(this)"
                                 }
+                                console.log(ptn[2],ptn[3],ptn[4],ptn[5])
+                                console.log(typeof(ptn[2]),typeof(ptn[3]),typeof(ptn[4]),typeof(ptn[5]))
+                                overallInit += ptn[2]
+                                overallDb += ptn[3]
+                                overallCd += ptn[4]
+                                overallBal += ptn[5]
                                 test_html = `<tr onclick="${clicker}" dataAttr='parentRow'  id="${ptn[0]}">
                                                 <td id="ptnName">${ptn[1]}</td>
                                                 <td class="num">${ptn[2].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
@@ -426,6 +444,12 @@
                             
                             let dateShowDiv = document.getElementById("header-date")
                             dateShowDiv.innerText = rangeDate
+                            console.log(overallDisplayer.children)
+                            console.log(overallInit, overallDb, overallCd, overallBal)
+                            overallDisplayer.children[1].innerText = `${overallInit.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
+                            overallDisplayer.children[2].innerText = `${overallDb.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
+                            overallDisplayer.children[3].innerText = `${overallCd.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
+                            overallDisplayer.children[4].innerText = `${overallBal.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K`
                         })
                         .catch(error => {console.log(error)})
                     }else if (para == "excel"){

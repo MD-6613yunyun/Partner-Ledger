@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, jsonify, request, url_for, send_file
-from . import LineTracker
 import psycopg2
 from datetime import date,timedelta, datetime
 import xlsxwriter
@@ -8,22 +7,6 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet , ParagraphStyle
 
 views = Blueprint('views',__name__)
-
-def connect_server():
-    # server and database declaration
-    server ,db = "http://192.168.0.60:8069","mmm_uat"
-    # server,db = "http://ec2-13-213-221-73.ap-southeast-1.compute.amazonaws.com","mmm_uat"
-    # username and password
-    username,pwd = "MD-6613","MD-6613"
-    # username,pwd = "MD-6613","mamayaykalparown"
-    ## Data processing
-    # create an instance of our line tracker object
-    mmm = LineTracker(db, username, pwd)
-    # authentication
-    uid = mmm.authenticate_server(server)
-    # objects intialization to process datas within models
-    models_obj = mmm.initialize_objects_in_server(server)
-    return mmm,models_obj
 
 def db_connection():
     # Database connection details
@@ -133,13 +116,9 @@ def get_each_journals(info):
     rows = cursor.fetchall()
     include_transaction_lst = [0]
     final_result, lines_result, init_bal, total_db, total_cd, bal, temp = {} , [] , 0.0 , 0 , 0 , 0.0, 0
-
+    overallInit, overallDb, overallCd, overallBal = 0.0 , 0.0 , 0.0 , 0.0
     for row in rows:
-        if row[7] == None:
-            row_lst = list(row)
-            row_lst[7] = date(2023, 1, 31)
-            row = tuple(row_lst)
-            print(row)
+        due_dt = "" if row[7] == None else row[7].strftime("%Y-%m-%d")
         if row[1] in ['cash','bank']:
             jrnl = row[3]
         elif row[1] in ['sale','purchase']:
@@ -150,12 +129,12 @@ def get_each_journals(info):
         match_num = "" if not row[8] else row[8]
         if row[13] not in include_transaction_lst:
             if include_transaction_lst[-1] != row[14] and include_transaction_lst[-1] != 0:
-                partner_last_balance = (init_bal + float(total_db)) - float(total_cd)
-                temp.extend([total_db,total_cd,partner_last_balance])
+                temp.extend([total_db,total_cd,bal])
+                overallDb += total_db
+                overallCd += total_cd
+                overallBal += bal
                 final_result[str(temp)] = lines_result
-                temp = 0
-                total_db = 0.0
-                total_cd = 0.0
+                bal, temp, total_db, total_cd = 0,0,0.0,0.0
             include_transaction_lst.append(row[13])
             init_where_clause = f"{where_clause}acc.partner_id = {row[13]} and  acc.date < '{start_date}' "
             query = """
@@ -175,29 +154,30 @@ def get_each_journals(info):
             if not cd:
                 cd = 0.00
             init_bal = float(db)-float(cd)
+            overallInit += init_bal
             bal = (float(init_bal) + float(row[9]) ) - float(row[10])
-            lines_result = [[row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,row[7].strftime("%Y-%m-%d"),match_num,row[11],"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal]]
+            lines_result = [[row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal]]
             if temp == 0:
                 temp = [row[13],row[14].replace("'","&lsquo;"),float(db)-float(cd)]
         else:
             init_bal = float(bal)
             bal = (init_bal + float(row[9]) ) - float(row[10])
-            lines_result.append([row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,row[7].strftime("%Y-%m-%d"),match_num,row[11],"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal])
+            lines_result.append([row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal])
         total_db += float(row[9])
         total_cd += float(row[10])
+
     # store last result
     if rows != []:
-        partner_last_balance = (init_bal + float(total_db)) - float(total_cd)
-        temp.extend([total_db,total_cd,partner_last_balance])
+        temp.extend([total_db,total_cd,bal])
+        overallDb += total_db
+        overallCd += total_cd
+        overallBal += bal
         final_result[str(temp)] = lines_result
-        temp = 0
-        total_db = 0.0
-        total_cd = 0.0
-    if not ownID and not ptnID:   
-        final_result.update(get_all_results(include_transaction_lst,f"{where_clause}acc.date < '{start_date}'"))
+        bal, temp, total_db, total_cd = 0,0,0.0,0.0
+    final_result.update(get_all_results(include_transaction_lst,f"{where_clause}acc.date < '{start_date}'"))
     cursor.close()
     conn.close()
-    return final_result,start_date,end_date,shop,ownID
+    return final_result,start_date,end_date,shop,ownID,["{0:,.2f} K".format(overallInit),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal)]
 
 def get_all_results(explict_tuple,where_clause):
     query = """
@@ -214,8 +194,9 @@ def get_all_results(explict_tuple,where_clause):
         GROUP BY
             p.name,p.id;
     """
-    where_clause = where_clause.replace('acc','line') if explict_tuple == [0] else where_clause.replace('acc','line') + f" and p.id not in {tuple(explict_tuple[1:])}"
+    where_clause = where_clause.replace('acc','line') if explict_tuple == [0]   else where_clause.replace('acc','line') + f" and p.id not in {tuple(explict_tuple)}"
     query = query.format(where_clause)
+    print(query)
     conn = db_connection()
     cursor = conn.cursor()
     cursor.execute(query)
@@ -223,7 +204,7 @@ def get_all_results(explict_tuple,where_clause):
     final_init_result = {}
     for dt in data:
         cus_name = dt[0].replace("'","&lsquo;")
-        key = f"['{dt[1]}','{cus_name}','{dt[2]}','0','0','{dt[2]}']"
+        key = str([dt[1],cus_name,"{:,.2f} ".format(dt[2]),'0.00','0.00',"{:,.2f} ".format(dt[2])])
         final_init_result[key] = []
     cursor.close()
     conn.close()
@@ -232,24 +213,28 @@ def get_all_results(explict_tuple,where_clause):
 def get_table_data_for_excel_pdf(variable,pdf=False):
     conn = db_connection()
     cursor = conn.cursor()
-    rtn_data,start_dt,end_dt,shop,ownID = get_each_journals(variable)
-    owner = ""
+    rtn_data,start_dt,end_dt,shop,ownID,overallList = get_each_journals(variable)
+    owner = "All Owners"
     if ownID:
         cursor.execute(f"SELECT id,name FROM res_partner_owner WHERE id = {ownID};")
         owners = cursor.fetchall()
         owner = owners[0][1] if len(owners) != 0 else ""
-    shop_data = "" if not shop else f"{shop[1]}"
+    shop_data = "All Shops" if not shop else f"{shop[1]}"
 
-    t_data = [['Date', 'JRNL', 'Acount', 'Ref', 'Due Date', 'Matching', 'Exchange Rate', 'Amount Currency','Initial Balance', 'Debit', 'Credit',  'Balance']]
+    t_data = [['Date', 'JRNL', 'Acount', 'Ref', 'Due Date', 'Matching', 'Exchange Rate', 'Amount Currency','Initial Balance', 'Debit', 'Credit',  'Balance'],
+              ['Overall','','','','','','',''] + overallList
+              ]
     if pdf:
-        t_data = [['Date', 'JRNL', 'Acount', 'Ref', 'Matching', 'Ex.Rate', 'Amt.Currency','Initial Balance', 'Debit', 'Credit',  'Balance']]
-        ptn_range = []
+        t_data = [['Date', 'JRNL', 'Acount', 'Ref', 'Matching', 'Ex.Rate', 'Amt.Currency','Initial Balance', 'Debit', 'Credit',  'Balance'],
+                  ['Overall','','','','','',''] + overallList
+                  ]
+        ptn_range = [1]
         row_identify = 0
         for ptn , lines in rtn_data.items():
             ptnList = eval(ptn)
             t_data.append([ptnList[1],'', '', '', '', '','',ptnList[2],ptnList[3],ptnList[4],ptnList[5]])
             row_identify += 1
-            ptn_range.append(row_identify)
+            ptn_range.append(row_identify+1)
             for line in lines:
                 del line[4]
                 line[-1] , line[-4] = "{:,.2f}".format(line[-1]) , "{:,.2f}".format(line[-4]) 
@@ -268,34 +253,29 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
 @views.route("get-excel-partner/<variable>")
 def get_excel_partner(variable):
     t_data,start_dt,end_dt,shop_data,owner = get_table_data_for_excel_pdf(variable)
-    
+    print(t_data)
     workbook = xlsxwriter.Workbook("D:\\Odoo Own Project\\Partner Ledger\\website\\PartnerLedger.xlsx")
     worksheet = workbook.add_worksheet("Partner Ledger")
     merge_format = workbook.add_format(
         {
             "bold": 1,
-            "border": 1,
             "align": "center",
             "valign": "vcenter"
         }
     )
+    data_format = workbook.add_format({'bg_color': '#DDDDDD',"bold":1})
 
     worksheet.merge_range("A1:L1",data="MUDON MAUNG MAUNG",cell_format=merge_format)
     worksheet.merge_range("A2:L2",data="Partner Ledger",cell_format=merge_format)
-    worksheet.merge_range("F3:G3",data=f"{owner}",cell_format=merge_format)
-
+    worksheet.merge_range("F3:G3",data=f"{shop_data}",cell_format=merge_format)
     worksheet.write("A3","Date -")
     worksheet.write("B3",f"From : {start_dt}")
     worksheet.write("C3",f"To : {end_dt}")
     worksheet.write("L4",f"Printed Date - {datetime.now().strftime('%B %d, %Y %H:%M:%S')}")
-    worksheet.write("L3",shop_data)
-
+    worksheet.write("L3",owner)
     for idx,lst in enumerate(t_data,start=4):
-        if idx == 1:
-            data_format = workbook.add_format({'bg_color': '#DDDDDD'})
-            worksheet.set_row(idx, cell_format=data_format)
         worksheet.write_row(idx,0,lst)
-
+    worksheet.conditional_format('A6:L6', {'type': 'no_errors', 'format':data_format})
     # for each in data:
     workbook.close()
     return send_file("PartnerLedger.xlsx",as_attachment=True)
