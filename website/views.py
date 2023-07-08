@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, jsonify, request, url_for, send_fi
 import psycopg2
 from datetime import date,timedelta, datetime
 import xlsxwriter
-from reportlab.lib.pagesizes import A4,landscape,LEGAL
+from reportlab.lib.pagesizes import A4,portrait
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet , ParagraphStyle
 
@@ -178,7 +178,7 @@ def get_each_journals(info):
     final_result.update(dct)
     cursor.close()
     conn.close()
-    return final_result,start_date,end_date,shop,ownID,["{0:,.2f} K".format(overallInit+var),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal+var)]
+    return final_result,start_date,end_date,shop,ownID,pi,["{0:,.2f} K".format(overallInit+var),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal+var)]
 
 def get_all_results(explict_tuple,where_clause):
     query = """
@@ -216,8 +216,12 @@ def get_all_results(explict_tuple,where_clause):
 def get_table_data_for_excel_pdf(variable,pdf=False):
     conn = db_connection()
     cursor = conn.cursor()
-    rtn_data,start_dt,end_dt,shop,ownID,overallList = get_each_journals(variable)
-    owner = "All Owners"
+    rtn_data,start_dt,end_dt,shop,ownID,pi,overallList = get_each_journals(variable)
+    owner = ""
+    if pi:
+        pi = pi[1]
+        if "Auto Part" in pi:
+            pi = "AUTO PARTS SALES CENTER"
     if ownID:
         cursor.execute(f"SELECT id,name FROM res_partner_owner WHERE id = {ownID};")
         owners = cursor.fetchall()
@@ -228,22 +232,22 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
               ['Overall','','','','','','',''] + overallList
               ]
     if pdf:
-        t_data = [['Date', 'JRNL', 'Acount', 'Ref', 'Matching', 'Ex.Rate', 'Amt.Currency','Initial Balance', 'Debit', 'Credit',  'Balance'],
-                  ['Overall','','','','','',''] + overallList
+        t_data = [['Date', 'JRNL',  'Ref',  'Ex.Rate', 'Amt.Currency','Init.Balance', 'Debit', 'Credit',  'Balance'],
+                  ['Overall','','','',''] + overallList
                   ]
         ptn_range = [1]
         row_identify = 0
         for ptn , lines in rtn_data.items():
             ptnList = eval(ptn)
-            t_data.append([ptnList[1],'', '', '', '', '','',ptnList[2],ptnList[3],ptnList[4],ptnList[5]])
+            t_data.append([ptnList[1],'', '', '', '', "{:,.2f}".format(ptnList[2]) if isinstance(ptnList[2],float) else ptnList[2],"{:,.2f}".format(ptnList[3]) if isinstance(ptnList[3],float) else ptnList[3],"{:,.2f}".format(ptnList[4]) if isinstance(ptnList[4],float) else ptnList[4],"{:,.2f}".format(ptnList[5]) if isinstance(ptnList[5],float) else ptnList[5]])
             row_identify += 1
             ptn_range.append(row_identify+1)
             for line in lines:
-                del line[4]
+                del line[4] , line[2] , line[3]
                 line[-1] , line[-4] = "{:,.2f}".format(line[-1]) , "{:,.2f}".format(line[-4]) 
                 t_data.append(line)
                 row_identify += 1
-        return t_data,start_dt,end_dt,shop_data,owner,ptn_range
+        return t_data,start_dt,end_dt,shop_data,owner,ptn_range,pi
     else:
         for ptn , lines in rtn_data.items():
             ptnList = eval(ptn)
@@ -251,11 +255,11 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
             for line in lines:
                 line[-2] , line[-3] = line[-2].replace(",","") , line[-3].replace(",","")
                 t_data.append(line)
-    return t_data,start_dt,end_dt,shop_data,owner
+    return t_data,start_dt,end_dt,shop_data,owner,pi
 
 @views.route("get-excel-partner/<variable>")
 def get_excel_partner(variable):
-    t_data,start_dt,end_dt,shop_data,owner = get_table_data_for_excel_pdf(variable)
+    t_data,start_dt,end_dt,shop_data,owner,BI = get_table_data_for_excel_pdf(variable)
     print(t_data)
     workbook = xlsxwriter.Workbook("D:\\Odoo Own Project\\Partner Ledger\\website\\PartnerLedger.xlsx")
     worksheet = workbook.add_worksheet("Partner Ledger")
@@ -285,12 +289,12 @@ def get_excel_partner(variable):
 
 @views.route("get-pdf-partner/<variable>")
 def get_pdf_partner(variable):
-    t_data,start_dt,end_dt,shop_data,owner,ptn_range = get_table_data_for_excel_pdf(variable,pdf=True)
+    t_data,start_dt,end_dt,shop_data,owner,ptn_range,BI = get_table_data_for_excel_pdf(variable,pdf=True)
 
     pdf_file_path = 'D:\\Odoo Own Project\\Partner Ledger\\website\\PartnerLedger.pdf'
     doc = SimpleDocTemplate(
         pdf_file_path, 
-        pagesize=landscape(LEGAL),
+        pagesize=portrait(A4),
         leftMargin = 20,
         rightMargin = 20,
         topMargin = 20,
@@ -301,33 +305,37 @@ def get_pdf_partner(variable):
         ('BACKGROUND', (0, 0), (-1, 0), '#1A78CF'),
         ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         ('BACKGROUND', (0, 1), (-1, -1), '#F7F7F7'),
         ('SPAN', (0, 1), (3, 1)),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('ALIGN', (3, 0), (3, -1), 'CENTER'),  # Align cells in column 3 (index starts from 0) to center
         ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
         ('ALIGN', (4, 1), (-1, -1), 'RIGHT'),
         ('GRID', (0, 0), (-1, -1), 0.5, '#CCCCCC'),
     ]
 
     for i in ptn_range:
-        table_styles.extend([('LINEBELOW', (0, i), (-1, i), 2, '#000000'),('FONTNAME', (0, i), (-1, i), 'Helvetica-Bold'),('SPAN', (0, i), (6, i))])
+        table_styles.extend([('LINEBELOW', (0, i), (-1, i), 2, '#000000'),('FONTNAME', (0, i), (-1, i), 'Helvetica-Bold'),('SPAN', (0, i), (4, i))])
 
     # Create a table and set its style
     table = Table(t_data)
     table.setStyle(TableStyle(table_styles))
 
     styles = getSampleStyleSheet()
-    header_style = styles['Heading1']
+    header_style = styles['Heading4']
     header_style.alignment = 1  # 0=left, 1=center, 2=right
     # headers
     header = Paragraph('<b>MUDON MAUNG MAUNG</b>', header_style)    
-    header1 = Paragraph(f"{shop_data}", header_style)    
+    header1 = Paragraph(f"{shop_data}", header_style) 
+    if BI:
+        header2 = Paragraph(f"{BI}", header_style)          
     # styles  for side by side texts
-    left_text_style = ParagraphStyle(name="LeftText", parent=styles["Normal"], alignment=0,leftIndent=10,fontSize=11)
-    right_text_style = ParagraphStyle(name="RightText", parent=styles["Normal"], alignment=2, rightIndent=10, fontSize=10)
-    center_text_style = ParagraphStyle(name="CenterText", parent=styles["Normal"], alignment=1, fontSize=10)
+    left_text_style = ParagraphStyle(name="LeftText", parent=styles["Normal"], alignment=0,leftIndent=5,fontSize=8)
+    right_text_style = ParagraphStyle(name="RightText", parent=styles["Normal"], alignment=2, rightIndent=5, fontSize=8)
+    center_text_style = ParagraphStyle(name="CenterText", parent=styles["Normal"], alignment=1, fontSize=8)
     # printed date 
     printed_date = Paragraph(f"Printed Date - {datetime.now().strftime('%B %d, %Y %H:%M:%S')}",right_text_style)
     # Create the data for the table
@@ -338,6 +346,9 @@ def get_pdf_partner(variable):
     # Create the table
     htable = Table(data)
     # Build the PDF document with header and table
-    elements = [printed_date,header,header1,htable, table]
+    if BI:
+        elements = [printed_date,header,header2,header1,htable, table]
+    else:
+        elements = [printed_date,header,header1,htable, table]
     doc.build(elements)
     return send_file("PartnerLedger.pdf",as_attachment=True)
