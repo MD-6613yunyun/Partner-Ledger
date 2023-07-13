@@ -5,6 +5,14 @@ import xlsxwriter
 from reportlab.lib.pagesizes import A4,portrait
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet , ParagraphStyle
+import os
+
+# Get the base directory of your project
+base_directory = os.path.dirname(os.path.abspath(__file__))
+
+# Combine the base directory and relative path to get the full file path
+excel_path = os.path.join(base_directory, "static/downloadable_files/PartnerLedger.xlsx")
+pdf_path = os.path.join(base_directory, "static/downloadable_files/PartnerLedger.pdf")
 
 views = Blueprint('views',__name__)
 
@@ -49,7 +57,7 @@ def get_data_all(variable:str):
     data,*n = get_each_journals(variable)
     return jsonify(data)
 
-def get_each_journals(info):
+def get_each_journals(info,export=False):
     pay,recv,post,draft,recon,pi,pc,shop,ownID,ptnID,rangeDate = info.split("@")
     pay,recv,post,draft,pi,pc,shop,ownID,ptnID = eval(pay.capitalize()),eval(recv.capitalize()),eval(post.capitalize()),eval(draft.capitalize()),eval(pi), eval(pc), eval(shop),eval(ownID),eval(ptnID)
     if pay and recv:
@@ -158,7 +166,10 @@ def get_each_journals(info):
             bal = (float(init_bal) + float(row[9]) ) - float(row[10])
             lines_result = [[row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal]]
             if temp == 0:
-                temp = [row[13],row[14].replace("'","&lsquo;"),float(db)-float(cd)]
+                if not export:
+                    temp = [row[13],row[14].replace("'","&lsquo;"),float(db)-float(cd)]
+                else:
+                    temp = [row[13],row[14],float(db)-float(cd)]
         else:
             init_bal = float(bal)
             bal = (init_bal + float(row[9]) ) - float(row[10])
@@ -197,7 +208,6 @@ def get_all_results(explict_tuple,where_clause):
     """
     where_clause = where_clause.replace('acc','line') if explict_tuple == [0]   else where_clause.replace('acc','line') + f" and p.id not in {tuple(explict_tuple)}"
     query = query.format(where_clause)
-    print(query)
     conn = db_connection()
     cursor = conn.cursor()
     cursor.execute(query)
@@ -216,7 +226,7 @@ def get_all_results(explict_tuple,where_clause):
 def get_table_data_for_excel_pdf(variable,pdf=False):
     conn = db_connection()
     cursor = conn.cursor()
-    rtn_data,start_dt,end_dt,shop,ownID,pi,overallList = get_each_journals(variable)
+    rtn_data,start_dt,end_dt,shop,ownID,pi,overallList = get_each_journals(variable,export=True)
     owner = ""
     if pi:
         pi = pi[1]
@@ -260,8 +270,7 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
 @views.route("get-excel-partner/<variable>")
 def get_excel_partner(variable):
     t_data,start_dt,end_dt,shop_data,owner,BI = get_table_data_for_excel_pdf(variable)
-    print(t_data)
-    workbook = xlsxwriter.Workbook("D:\\Odoo Own Project\\Partner Ledger\\website\\PartnerLedger.xlsx")
+    workbook = xlsxwriter.Workbook(excel_path)
     worksheet = workbook.add_worksheet("Partner Ledger")
     merge_format = workbook.add_format(
         {
@@ -285,15 +294,13 @@ def get_excel_partner(variable):
     worksheet.conditional_format('A6:L6', {'type': 'no_errors', 'format':data_format})
     # for each in data:
     workbook.close()
-    return send_file("PartnerLedger.xlsx",as_attachment=True)
+    return send_file(excel_path,as_attachment=True)
 
 @views.route("get-pdf-partner/<variable>")
 def get_pdf_partner(variable):
     t_data,start_dt,end_dt,shop_data,owner,ptn_range,BI = get_table_data_for_excel_pdf(variable,pdf=True)
-
-    pdf_file_path = 'D:\\Odoo Own Project\\Partner Ledger\\website\\PartnerLedger.pdf'
     doc = SimpleDocTemplate(
-        pdf_file_path, 
+        pdf_path,
         pagesize=portrait(A4),
         leftMargin = 20,
         rightMargin = 20,
@@ -325,10 +332,10 @@ def get_pdf_partner(variable):
     table.setStyle(TableStyle(table_styles))
 
     styles = getSampleStyleSheet()
-    header_style = styles['Heading4']
+    header_style = styles['Heading2']
     header_style.alignment = 1  # 0=left, 1=center, 2=right
     # headers
-    header = Paragraph('<b>MUDON MAUNG MAUNG</b>', header_style)    
+    header = Paragraph('MUDON MAUNG MAUNG', header_style)    
     header1 = Paragraph(f"{shop_data}", header_style) 
     if BI:
         header2 = Paragraph(f"{BI}", header_style)          
@@ -351,4 +358,4 @@ def get_pdf_partner(variable):
     else:
         elements = [printed_date,header,header1,htable, table]
     doc.build(elements)
-    return send_file("PartnerLedger.pdf",as_attachment=True)
+    return send_file(pdf_path,as_attachment=True)
