@@ -16,6 +16,17 @@ pdf_path = os.path.join(base_directory, "static/downloadable_files/PartnerLedger
 
 views = Blueprint('views',__name__)
 
+def get_financial_year_dates():
+    date = datetime.now().date()
+    if date.month >= 4:  # April or later
+        start_date = datetime(date.year, 4, 1).strftime('%Y-%m-%d')
+        end_date = datetime(date.year + 1, 3, 31).strftime('%Y-%m-%d')
+    else:  # Before April
+        start_date = datetime(date.year - 1, 4, 1).strftime('%Y-%m-%d')
+        end_date = datetime(date.year, 3, 31).strftime('%Y-%m-%d')
+
+    return start_date, end_date
+
 def db_connection():
     # Database connection details
     host = '192.168.0.60'
@@ -95,7 +106,7 @@ def get_each_journals(info,export=False):
     elif rangeDate == 'This Month':
         start_date = date.today().replace(day=1).strftime('%Y-%m-%d')
     elif rangeDate == 'This Year':
-        start_date = date.today().replace(day=1,month=1).strftime('%Y-%m-%d')
+        start_date,end_date = get_financial_year_dates()
     else:
         dts = rangeDate.replace("~","/").split(" - ")
         start_date = (datetime.strptime(dts[0], "%m/%d/%Y")).strftime("%Y-%m-%d")
@@ -141,6 +152,9 @@ def get_each_journals(info,export=False):
                 overallDb += total_db
                 overallCd += total_cd
                 overallBal += bal
+                temp[1] = "  " + temp[1]
+                if lines_result != []:
+                    temp[1] = "⏬ " + temp[1]
                 final_result[str(temp)] = lines_result
                 bal, temp, total_db, total_cd = 0,0,0.0,0.0
             include_transaction_lst.append(row[13])
@@ -164,7 +178,8 @@ def get_each_journals(info,export=False):
             init_bal = float(db)-float(cd)
             overallInit += init_bal
             bal = (float(init_bal) + float(row[9]) ) - float(row[10])
-            lines_result = [[row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal]]
+            curr = row[-1] if row[-1] != 'MMK' else 'K'
+            lines_result = [[row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + curr,init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal]]
             if temp == 0:
                 if not export:
                     temp = [row[13],row[14].replace("'","&lsquo;"),float(db)-float(cd)]
@@ -173,7 +188,7 @@ def get_each_journals(info,export=False):
         else:
             init_bal = float(bal)
             bal = (init_bal + float(row[9]) ) - float(row[10])
-            lines_result.append([row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + row[-1],init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal])
+            lines_result.append([row[5].strftime("%Y-%m-%d"),typ,row[6],jrnl,due_dt,match_num,"{0:,.2f}".format(row[11]),"{:,.2f} ".format(row[12]) + curr ,init_bal,"{:,.2f}".format(row[9]),"{:,.2f}".format(row[10]),bal])
         total_db += float(row[9])
         total_cd += float(row[10])
 
@@ -183,6 +198,10 @@ def get_each_journals(info,export=False):
         overallDb += total_db
         overallCd += total_cd
         overallBal += bal
+        if lines_result != []:
+            temp[1] = "⏬ " + temp[1]
+        else:
+            temp[1] = "  " + temp[1]
         final_result[str(temp)] = lines_result
         bal, temp, total_db, total_cd = 0,0,0.0,0.0
     dct , var = get_all_results(include_transaction_lst,f"{where_clause}acc.date < '{start_date}'")
@@ -217,8 +236,9 @@ def get_all_results(explict_tuple,where_clause):
     for dt in data:
         cus_name = dt[0].replace("'","&lsquo;")
         initBal += float(dt[2])
-        key = str([dt[1],cus_name,"{:,.2f}".format(dt[2]),'0.00','0.00',"{:,.2f}".format(dt[2])])
-        final_init_result[key] = []
+        if dt[2] != 0.0:
+            key = str([dt[1],"  " + cus_name,"{:,.2f}".format(dt[2]),'0.00','0.00',"{:,.2f}".format(dt[2])])
+            final_init_result[key] = []
     cursor.close()
     conn.close()
     return final_init_result, initBal
@@ -242,14 +262,14 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
               ['Overall','','','','','','',''] + overallList
               ]
     if pdf:
-        t_data = [['Date', 'JRNL',  'Ref',  'Ex.Rate', 'Amt.Currency','Init.Balance', 'Debit', 'Credit',  'Balance'],
+        t_data = [['Date', 'JRNL',  'Ref',  'Rate', 'Amt.Currency','Init.Balance', 'Debit', 'Credit',  'Balance'],
                   ['Overall','','','',''] + overallList
                   ]
         ptn_range = [1]
         row_identify = 0
         for ptn , lines in rtn_data.items():
             ptnList = eval(ptn)
-            t_data.append([ptnList[1],'', '', '', '', "{:,.2f}".format(ptnList[2]) if isinstance(ptnList[2],float) else ptnList[2],"{:,.2f}".format(ptnList[3]) if isinstance(ptnList[3],float) else ptnList[3],"{:,.2f}".format(ptnList[4]) if isinstance(ptnList[4],float) else ptnList[4],"{:,.2f}".format(ptnList[5]) if isinstance(ptnList[5],float) else ptnList[5]])
+            t_data.append([ptnList[1][2:],'', '', '', '', "{:,.2f}".format(ptnList[2]) if isinstance(ptnList[2],float) else ptnList[2],"{:,.2f}".format(ptnList[3]) if isinstance(ptnList[3],float) else ptnList[3],"{:,.2f}".format(ptnList[4]) if isinstance(ptnList[4],float) else ptnList[4],"{:,.2f}".format(ptnList[5]) if isinstance(ptnList[5],float) else ptnList[5]])
             row_identify += 1
             ptn_range.append(row_identify+1)
             for line in lines:
@@ -261,7 +281,7 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
     else:
         for ptn , lines in rtn_data.items():
             ptnList = eval(ptn)
-            t_data.append([ptnList[1],'', '', '', '', '','', '',ptnList[2],ptnList[3],ptnList[4],ptnList[5]])
+            t_data.append([ptnList[1][2:],'', '', '', '', '','', '',ptnList[2],ptnList[3],ptnList[4],ptnList[5]])
             for line in lines:
                 line[-2] , line[-3] = line[-2].replace(",","") , line[-3].replace(",","")
                 t_data.append(line)
@@ -307,13 +327,12 @@ def get_pdf_partner(variable):
         topMargin = 20,
         bottomMargin = 20
         )
-    
     table_styles = [
         ('BACKGROUND', (0, 0), (-1, 0), '#1A78CF'),
         ('TEXTCOLOR', (0, 0), (-1, 0), '#FFFFFF'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
         ('BACKGROUND', (0, 1), (-1, -1), '#F7F7F7'),
         ('SPAN', (0, 1), (3, 1)),
@@ -323,6 +342,10 @@ def get_pdf_partner(variable):
         ('ALIGN', (4, 1), (-1, -1), 'RIGHT'),
         ('GRID', (0, 0), (-1, -1), 0.5, '#CCCCCC'),
     ]
+    for i in t_data:
+        if i[1] != "":
+            table_styles[4] = ('FONTSIZE', (0, 0), (-1, -1), 7)
+            break
 
     for i in ptn_range:
         table_styles.extend([('LINEBELOW', (0, i), (-1, i), 2, '#000000'),('FONTNAME', (0, i), (-1, i), 'Helvetica-Bold'),('SPAN', (0, i), (4, i))])
