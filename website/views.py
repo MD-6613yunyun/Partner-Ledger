@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, jsonify, request, url_for, send_file
-import psycopg2
+from flask import Blueprint, render_template, jsonify, request, url_for, send_file,redirect
+from website import db_connection
 from datetime import date,timedelta, datetime
 import xlsxwriter
 from reportlab.lib.pagesizes import A4,portrait
@@ -27,32 +27,34 @@ def get_financial_year_dates():
 
     return start_date, end_date
 
-def db_connection():
-    # Database connection details
-    host = '192.168.0.60'
-    # host = '172.30.32.183'
-    port = '5432'  # Default PostgreSQL port
-    database = 'mmm_uat'
-    user = 'postgres'
-    password = 'admin'
-    
-    # Establish the database connection
-    try:
-        conn = psycopg2.connect(
-            host=host,
-            port=port,
-            database=database,
-            user=user,
-            password=password
-        )
-        return conn
-    except psycopg2.Error as e:
-        print('Error connecting to the database:', e)
-    
 @views.route('/')
+def nani_home():
+    return redirect(url_for('auth.authenticate',typ='log'))
+
+@views.route('/ledger-report')
 def all_partners():
     conn = db_connection()
     cursor = conn.cursor()
+    code = request.cookies.get('code_id')
+    admin = request.cookies.get('admin')
+    if not code:
+        return redirect(url_for('auth.authenticate'))
+    admins = [code,eval(admin)]
+    cursor.execute("SELECT unit_code,shop_code FROM user_auth WHERE code = %s",(code,))
+    datas = cursor.fetchall()
+    units_ids = [dt for dt in datas[0][0].split(",") if dt != '']
+    shops_ids = [dt for dt in datas[0][1].split(",") if dt != '']
+    units,shops = [] , []
+    if units_ids != []:
+        cursor.execute("SELECT id,name FROM res_company WHERE id in %s",(tuple(units_ids),))
+        units = cursor.fetchall()
+    if '0' in units_ids:
+        units.append((0,'All Business Units'))
+    if shops_ids != []:
+        cursor.execute("SELECT id,name FROM analytic_shop WHERE id in %s",(tuple(shops_ids),))
+        shops = cursor.fetchall()
+    if '0' in shops_ids:
+        shops.append((0,'All Shops'))
     cursor.execute("SELECT id,code FROM analytic_project_code;")
     pj_codes = cursor.fetchall()
     cursor.execute("SELECT id,name FROM res_partner_owner;")
@@ -61,7 +63,7 @@ def all_partners():
     partners = cursor.fetchall()
     cursor.close()
     conn.close()
-    return render_template("all_partners.html",pj_codes = pj_codes,owners = owners, partners = partners)
+    return render_template("all_partners.html",pj_codes = pj_codes,owners = owners, partners = partners,units = units, shops = shops,admins=admins)
 
 @views.route('/get-data-all/<variable>')
 def get_data_all(variable:str):
@@ -87,11 +89,11 @@ def get_each_journals(info,export=False):
             where_clause += "acc.parent_state = 'posted' and " 
     if recon == 'Only show unreconciled entries':
         where_clause += "acc.full_reconcile_id is null and "
-    if pi:
+    if pi and pi[0] != '0':
         where_clause += f"acc.unit_id = {int(pi[0])} and "
     if pc:
         where_clause += f"acc.project_code_id = {pc} and "
-    if shop:
+    if shop and shop[0] != '0':
         where_clause += f"acc.shop_id = {int(shop[0])} and "
     if ownID:
         where_clause += f"acc.owner_id = {ownID} and "

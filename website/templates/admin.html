@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/style.css')}}">
+</head>
+<body>
+    {% if not authenticate %}
+    <div class="form-holder">
+        <form class="auth-form" id="login-form" method="POST" action="{{ url_for('admin.admin_login')}}">
+            <div class="mb-2">
+                <label for="log-code" class="form-label">Employee Code</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="basic-addon3">MD - </span>
+                    <input type="number" min="1" class="form-control" name="log-code" id="log-code" aria-describedby="basic-addon3 basic-addon4" required>
+                </div>
+                <div class="form-text text-secondary" id="basic-addon4">This code verifies that you are under MMM..</div>
+            </div>
+            <div class="mb-3">
+                <label for="log-pwd" class="form-label">Password</label>
+                <input type="password" class="form-control" name="log-pwd" id="log-pwd" required>
+            </div>
+            <button type="submit" class="btn btn-primary d-block w-100">Login</button>
+        </form>
+    </div>
+    {% elif authenticate %}
+    <h1 class="text-center">User Table</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Emp.Code</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Admin</th>
+                <th>Access Rights</th>
+                <th>Del.Acc.</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in result %}
+            <tr>
+                <td>MD - {{data[1]}}</td>
+                <td>{{data[2]}}</td>
+                <td>{{data[3]}}</td>
+                <td>
+                    {{data[4]}}
+                    {% if data[4] == True %}
+                        <button class="btn btn-danger ms-1" onclick="grantAdmin('{{data[0]}}',false)">Rmv.</button>
+                    {% else %}
+                        <button class="btn btn-dark ms-1" onclick="grantAdmin('{{data[0]}}',true)">Add.</button>
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-primary" onclick="openForm('{{data[0]}}')">Grant</button>
+                </td>
+                <td>
+                    <form action="/admin/delUser" method="POST">
+                        <input value="{{data[0]}}" name="delUserId" hidden>
+                        <button class="btn btn-danger"  type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- The Modal -->
+    <div id="myModal" class="modal-admin">
+        <!-- Modal content -->
+        <div class="modal-content-admin">
+            <span class="close">&times;</span>
+            <form action="/admin/grant" method="POST">
+                <input hidden name="userID">
+                <select class="form-select" size="7" multiple name="unit-selects" aria-label="select example">
+                    {% for id,name in all_units.items() %}
+                        <option value="{{id}}">{{name}}</option>
+                    {% endfor %}
+                    <option value="0">All Business Units</option>
+                </select>
+                <select class="form-select mt-3" size="7" multiple name="shop-selects" aria-label="elect example">
+                    {% for id,name in all_shops.items() %}
+                        <option value="{{id}}">{{name}}</option>
+                    {% endfor %}
+                    <option value="0">All Shops</option>
+                </select>  
+                <button type="submit" class="btn btn-dark mt-3">Grant Access to Users..</button>
+            </form>
+        </div>
+    </div>
+    <p class="text-end m-3"><a class="link-opacity-100" href="{{url_for('views.all_partners')}}">Go Back To Reports</a></p>
+    {% endif %}
+
+    <script src="{{url_for('static',filename='js/main.js')}}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+</body>
+</html>

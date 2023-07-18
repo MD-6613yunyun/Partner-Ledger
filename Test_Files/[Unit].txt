@@ -1,0 +1,20 @@
+[Unit]
+Description=Gunicorn instance for 
+After=network.target
+[Service]
+User=ubuntu
+Group=www-data
+WorkingDirectory=/mmm/OdooOwnReports/Partner-Ledger
+ExecStart=/mmm/OdooOwnReports/venv/bin/gunicorn -b localhost:8998 main:app
+Restart=always
+[Install]
+WantedBy=multi-user.target
+
+
+host = '127.0.0.1'
+port = '5432'  # Default PostgreSQL port
+database = 'mmm_uat'
+user = 'odoo'
+password = '!h@cKM3Ple@Se?'
+
+sudo chown -R ubuntu:ubuntu /mmm/OdooOwnReports/Partner-Ledger/website/static/downloadable_files

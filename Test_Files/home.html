@@ -7,10 +7,62 @@
 </head>
 <body>
     <h1>Welcome</h1>
-    <ul>
-        {% for invoices in result %}
-            <li>{{invoices}}</li>
-        {% endfor %}
-    </ul>
+    <div id="dataContainer"></div>
+    <div id="paginationContainer"></div>        
 </body>
+<script type="text/javascript">
+    console.log("hello")
+    // Sample array with 1000 elements
+const dataArray = Array.from({ length: 1000 }, (_, index) => `Element ${index + 1}`);
+
+// Constants
+const itemsPerPage = 10; // Number of items to display per page
+let currentPage = 1; // Current page number
+
+// Function to display data for the current page
+function displayData() {
+  const container = document.getElementById('dataContainer');
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageData = dataArray.slice(startIndex, endIndex);
+
+  // Clear the container
+  container.innerHTML = '';
+
+  // Display the current page data
+  currentPageData.forEach((item) => {
+    const listItem = document.createElement('p');
+    listItem.textContent = item;
+    container.appendChild(listItem);
+  });
+}
+
+// Function to update the pagination links
+function updatePagination() {
+  const paginationContainer = document.getElementById('paginationContainer');
+  const totalPages = Math.ceil(dataArray.length / itemsPerPage);
+
+  // Clear the container
+  paginationContainer.innerHTML = '';
+
+  // Create and append pagination links
+  for (let i = 1; i <= totalPages; i++) {
+    const pageLink = document.createElement('a');
+    pageLink.href = '#';
+    pageLink.textContent = i;
+    pageLink.addEventListener('click', (event) => {
+      event.preventDefault();
+      currentPage = i;
+      displayData();
+      updatePagination();
+    });
+    paginationContainer.appendChild(pageLink);
+  }
+}
+
+// Initial setup
+displayData();
+updatePagination();
+
+</script>
 </html>

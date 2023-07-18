@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authenticate</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{url_for('static',filename='css/style.css')}}">
+</head>
+<body>
+    {% if mgs %}
+        <div class="alert alert-danger m-0" role="alert">{{mgs}}</div>
+    {% endif %}
+    <div class="form-holder">
+        {% if atyp == 'log' %}
+        <form class="auth-form" id="login-form" method="POST" action="{{ url_for('auth.handle_auth',typ='log')}}">
+            <div class="mb-2">
+                <label for="log-code" class="form-label">Employee Code</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="basic-addon3">MD - </span>
+                    <input type="number" min="1" class="form-control" name="log-code" id="log-code" aria-describedby="basic-addon3 basic-addon4" required>
+                </div>
+                <div class="form-text text-secondary" id="basic-addon4">This code verifies that you are under MMM..</div>
+            </div>
+            <div class="mb-3">
+                <label for="log-pwd" class="form-label">Password</label>
+                <input type="password" class="form-control" name="log-pwd" id="log-pwd" required>
+            </div>
+            <button type="submit" class="btn btn-primary d-block w-100">Login</button>
+            <a href="{{url_for('auth.authenticate',atyp='reg')}}" class="btn btn-secondary mt-2 w-100" role="button">Don't have an account! Register..</a>
+            <a href="{{url_for('auth.authenticate',atyp='fog')}}" class="btn btn-danger mt-2 w-100" role="button">Forget Password !!</a>
+        </form>
+        {% elif atyp == 'fog' %}
+        <form class="auth-form" id="forget-pwd-form" method="POST" action="{{ url_for('auth.handle_auth',typ='fog')}}">
+            <div>
+                <label for="forget-mail" class="form-label">Email</label>
+                <div class="input-group">
+                    <input type="email" class="form-control" name="forget-mail" id="forget-mail" aria-describedby="basic-addon3 basic-addon4" required>
+                </div>
+            </div>
+            <div class="mb-2">
+                <label for="forget-code" class="form-label">Employee Code</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="basic-addon3">MD - </span>
+                    <input type="number" min="1" class="form-control" name="forget-code" id="forget-code" aria-describedby="basic-addon3 basic-addon4" required>
+                </div>
+                <div class="form-text text-secondary" id="basic-addon4">This code verifies that you are under MMM..</div>
+            </div>
+            <div class="mb-3">
+                <label for="fog-ref" class="form-label">Ref Person in MMM</label>
+                <input type="text" class="form-control" name="forget-ref" id="fog-ref" required>
+            </div>
+            <button type="submit" class="btn btn-primary d-block w-100">Request Password</button>
+            <div class="text-center" style="cursor: pointer;">
+                <a class="link-underline-opacity-10-hover" data-bs-toggle="modal" data-bs-target="#exampleModal">Terms & Conditions</a>
+            </div>
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Mudon Maung Maung Co.,Ltd</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>To prevent some security risks , we don't give user permission to create their own passoword.</p>
+                        </br><p>But new password will be sent to your mail. You can change later.</p>
+                        </br><p>As this is a reporting app and information are very sensitive , we surely take care of user acess rights.</p>
+                        </br><p>Any newly created user won't create report for the security. But you can ask our admin to get report access. ..</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">I Agree!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% else %}
+        <form class="auth-form" id="register-form" method="POST" action="{{ url_for('auth.handle_auth',typ='reg')}}">
+            <div>
+                <label for="reg-name" class="form-label">Full Name</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="reg-name" id="reg-name" aria-describedby="basic-addon3 basic-addon4" required>
+                </div>
+            </div>
+            <div class="mb-2">
+                <label for="reg-code" class="form-label">Employee Code</label>
+                <div class="input-group">
+                    <span class="input-group-text" id="basic-addon3">MD - </span>
+                    <input type="number" min="1" class="form-control" name="reg-code" id="reg-code" aria-describedby="basic-addon3 basic-addon4" required>
+                </div>
+                <div class="form-text text-secondary" id="basic-addon4">This code verifies that you are under MMM..</div>
+            </div>
+            <div>
+                <label for="reg-mail" class="form-label">Email</label>
+                <input type="email" class="form-control" name="reg-mail" id="reg-mail" required>
+            </div>
+            <div class="mb-3">
+                <label for="reg-ref" class="form-label">Ref Person in MMM</label>
+                <input type="text" class="form-control" name="reg-ref" id="reg-ref" required>
+            </div>
+            <button type="submit" class="btn btn-primary d-block w-100">Register</button>
+            <a href="{{url_for('auth.authenticate',atyp='log')}}" class="btn btn-secondary mt-2 w-100" role="button">Already have an account? Login..</a>
+            <div class="text-center" style="cursor: pointer;">
+                <a class="link-underline-opacity-10-hover" data-bs-toggle="modal" data-bs-target="#exampleModal">Terms & Conditions</a>
+            </div>
+            <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Mudon Maung Maung Co.,Ltd</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>When you request forget password , new password will be sent to your email.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">I Agree!</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+    </div>    
+    <script src="{{url_for('static',filename='js/main.js')}}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+</body>
+</html>
