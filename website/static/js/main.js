@@ -35,11 +35,21 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
             }
         }
     }
+
     function assignShop(btn){
-        let idd = btn.getAttribute('shopID')
-        btn.parentElement.parentElement.previousElementSibling.innerText = btn.innerText
-        btn.parentElement.parentElement.previousElementSibling.setAttribute('shopID',idd)
+        if(btn.classList.contains("chooseOption")){
+            console.log(btn.getAttribute("value"))
+            btn.parentElement.previousElementSibling.previousElementSibling.value = btn.getAttribute("value")
+            btn.parentElement.previousElementSibling.innerText = btn.innerText
+        }else{
+            let idd = btn.getAttribute('shopID')
+            btn.parentElement.parentElement.parentElement.previousElementSibling.innerText = btn.innerText
+            btn.parentElement.parentElement.parentElement.previousElementSibling.previousElementSibling.value = idd
+            btn.parentElement.parentElement.parentElement.previousElementSibling.setAttribute('shopID',idd)
+            console.log(btn.parentElement.parentElement.parentElement.previousElementSibling.previousElementSibling.value)
+        }
     }
+
     function dateChange(btn){
         btn.parentElement.previousElementSibling.innerText = btn.innerText
     }
@@ -56,20 +66,37 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
         shop = document.getElementById('shop').getAttribute("shopID")
         date = document.getElementById('changeDate')
         let rangeDate = dataForm = ""
-        if (date.innerText.trim() == 'Date'){
-            rangeDate = date.nextElementSibling.children[4].value
-        }else{
-            rangeDate = date.innerText.trim()
-        }
-        if (bi == "False"){
+
+        startDate = document.getElementById("start-dt")
+        endDate = document.getElementById("end-dt")
+        pay = document.getElementById("pay-receive")
+        rec =  document.getElementById("entries")
+        accStatus = document.getElementById("acc-status")
+        bi = document.getElementById("unit")
+        pjCode = document.getElementById("pj-code")
+        shop = document.getElementById("shop")
+        owner = document.getElementById("owner")
+        partner = document.getElementById("partner")
+
+        if (startDate.value == "" || endDate.value == ""){
+            alert("Date must be specified")
+        }else if (bi.value == ""){
             alert("Business Unit must be assigned..")
-        }else if(shop == 'False'){
+        }else if(shop.value == ''){
             alert("Shops must be assigned..")
-        }else if (pay.checked == false && recev.checked == false){
+        }else if(rec.value == ''){
+            alert("Please Choose Entry Status..")
+        }else if (pay.value == ''){
             alert("Report must be either payable or receiveable..")
-        }else if (post.checked == false && draft.checked == false){
+        }else if (accStatus.value == ''){
             alert("Report must be either posted or unposted...")
-        }else if (own != "False" && ptn != "False"){
+        }else if (pjCode.value == ''){
+            alert("Project Code must be chosen.If not specified ( chose no filter project code )")        
+        }else if (owner.value == ''){
+            alert("Owner must be chosen.If not specified ( chose no filter owner )")
+        }else if (partner.value == ''){
+            alert("Partner must be chosen.If not specified ( chose no filter partner )")
+        }else if ((owner.value != "" && owner.value != 'False ') && (partner.value != "" && partner.value != 'False')){
             alert("Report must not be filtered with both partner and owner.....")
         }else{
             let blurr = document.getElementById("partnerTable")
@@ -77,7 +104,9 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
             spin.style.display = ""
             blurr.classList.add("demo")
             rangeDate = rangeDate.replace(/\//g, "~")
-            dataForm = `${pay.checked}@${recev.checked}@${post.checked}@${draft.checked}@${rec}@${bi}@${pc}@${shop}@${own}@${ptn}@${rangeDate}`
+            dataForm = `${pay.value}@${rec.value}@${accStatus.value}@${bi.value}@${pjCode.value}@${shop.value}@${owner.value}@${partner.value}@${startDate.value}@${endDate.value}`
+            console.log(dataForm)
+            // dataForm = `${pay.checked}@${recev.checked}@${post.checked}@${draft.checked}@${rec}@${bi}@${pc}@${shop}@${own}@${ptn}@${rangeDate}`
             if (para == "normal"){
                 tableBody.innerHTML = ""
                 fetch(`/get-data-all/${dataForm}`)
@@ -100,43 +129,39 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
                         overallCd += typeof(ptn[4]) == typeof(12) ? ptn[4] : Number(ptn[4].replace(/,/g,''))
                         overallBal += typeof(ptn[5]) == typeof(12) ? ptn[5] : Number(ptn[5].replace(/,/g,''))
                         test_html = `<tr onclick="${clicker}" dataAttr='parentRow'  id="${ptn[0]}">
-                                        <td id="ptnName">${ptn[1]}</td>
-                                        <td class="num">${ptn[2].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
-                                        <td class="num">${ptn[3].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
-                                        <td class="num">${ptn[4].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
-                                        <td class="num">${ptn[5].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
+                                        <td class="text-start" id="ptnName">${ptn[1]}</td>
+                                        <td class="num text-end">${ptn[2].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
+                                        <td class="num text-end">${ptn[3].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
+                                        <td class="num text-end">${ptn[4].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
+                                        <td class="num text-end">${ptn[5].toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: 2 })} K</td>
                                     </tr>
-                                    <tr hidden >
-                                        <td colspan="12">
-                                            <table class="table">
-                                                <tbody >
-                                                    <table class="table table-hover partner-table">
-                                                        <thead>
-                                                            <tr class="table-light" style="position: sticky;top: 0;">
-                                                                <th>Date</th>
-                                                                <th>JRNL</th>
-                                                                <th>Account</th>
-                                                                <th>Ref</th>
-                                                                <th>Due Date</th>
-                                                                <th>Matching No.</th>
-                                                                <th>Ex. Rate
-                                                                <th>Amt. Currency</th>
-                                                                <th>Initial Balance</th>
-                                                                <th>Debit</th>
-                                                                <th>Credit</th>
-                                                                <th>Balance</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="${ptn[0]}">
-                                                            
-                                                        </tbody>
+                                    <tr hidden>
+                                        <td colspan="6" style="padding: 0;margin: 0;">
+                                            <table class="table table-hover partner-table" style="width: 100%;">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="text-start text-success" style="background-color: #EEEEEE;">Date</th>
+                                                        <th class="text-start text-success" style="background-color: #EEEEEE;">JRNL</th>
+                                                        <th class="text-start text-success" style="background-color: #EEEEEE;">Account</th>
+                                                        <th class="text-start text-success" style="background-color: #EEEEEE;">Ref</th>
+                                                        <th class="text-start text-success" style="background-color: #EEEEEE;">Due Date</th>
+                                                        <th class="text-start text-success" style="background-color: #EEEEEE;">Matching</th>
+                                                        <th class="text-end text-success" style="background-color: #EEEEEE;">Initial Balance</th>
+                                                        <th class="text-end text-success" style="background-color: #EEEEEE;">Debit</th>
+                                                        <th class="text-end text-success" style="background-color: #EEEEEE;">Credit</th>
+                                                        <th class="text-end text-success" style="background-color: #EEEEEE;">Amount Currency</th>
+                                                        <th class="text-end text-success" style="background-color: #EEEEEE;">Balance</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="${ptn[0]}">
+ 
                                                 </tbody>
                                             </table>
                                         </td>
                                     </tr>`
                                     partnersArr[ptn[1]] = ptn[0]
                                     show_and_hide_Arr[ptn[0]] = value
-                        tableBody.innerHTML += test_html
+                                    tableBody.innerHTML += test_html
                     });
                     spin.style.display = "none"
                     blurr.classList.remove("demo")
@@ -209,16 +234,6 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
         }
     }
 
-    showModalPartner = document.getElementById("showModalPartner")
-    btnClicker = document.getElementById("modalClicker")
-    showModalPartner.addEventListener('click',function(){
-        if (tableBody.innerHTML.trim() == ""){
-            alert("You can't filter partners witout the data..")
-        }else{
-            btnClicker.click()
-        }
-    })
-
     function fillPtn(list){
         namePtn.value = list.textContent
         ptnList.style.display = "none"
@@ -267,8 +282,11 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
     }
 }else if(window.location.href.endsWith("/auth/")){
     console.log("Auth")
-}else if(window.location.href.endsWith("/admin/login") || window.location.href.endsWith("/admin/grant") ){
-
+    document.cookie = 'code_id' + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = 'admin' + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+}else if(window.location.href.endsWith("/admin/login") || window.location.href.endsWith("/admin/grant") || window.location.href.endsWith("/admin/delUser") ){
+    document.cookie = 'code_id' + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie = 'admin' + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     // Get the modal
     var modal = document.getElementById("myModal");
 
@@ -292,4 +310,16 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
         .catch(e => console.log(e))
     }
 
+}
+
+function searchPartnerFromTable(inp){
+    console.log(inp.value)
+    let inputedText = inp.value.trim().toLowerCase()
+    document.querySelectorAll("#dataTableBody tr[dataattr='parentRow']").forEach(trRow => {
+        if (trRow.querySelector("#ptnName").textContent.trim().toLowerCase().includes(inputedText)){
+            trRow.classList.remove("d-none")
+        }else{
+            trRow.classList.add("d-none")
+        }
+    })
 }

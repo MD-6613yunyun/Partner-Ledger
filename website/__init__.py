@@ -4,6 +4,7 @@ import psycopg2
 def create_app():
     app = Flask(__name__)
     app.config['secret_key'] = "zaqwsxcderfvbgtyhnmjuik129838484734893"
+    app.secret_key = app.config['secret_key']
 
     from .views import views
     from .auth import auth
@@ -17,14 +18,14 @@ def create_app():
 
 def db_connection():
     # Database connection details
-    host = '192.168.0.60'
+    host = 'localhost'
     # host = '0.tcp.ap.ngrok.io'
     # host = '172.30.32.183'
     port = '5432'  # Default PostgreSQL port
     # port = '15769'
-    database = 'mmm_uat'
+    database = 'odoo_14_uat'
     user = 'postgres'
-    password = 'admin'
+    password = 'md-6613'
     
     # Establish the database connection
     try:

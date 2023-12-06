@@ -1,4 +1,5 @@
-from flask import Blueprint, render_template, request,redirect,url_for,make_response,after_this_request
+from flask import Blueprint, render_template, request,redirect,url_for,make_response,after_this_request,session
+import subprocess
 from website import db_connection
 from website import password_hash
 import random
@@ -12,15 +13,44 @@ def mix_string_with_random(string_to_mix, random_length):
     mixed_string = ''.join(random.sample(string_to_mix + random_chars, len(string_to_mix + random_chars)))
     return mixed_string.replace(' ','')
 
+def send_password_to_the_mail(mail,pwd):
+    # Command to execute
+    command = r"""(echo "Subject: Partner Ledger Account"; echo "MIME-Version: 1.0"; 
+    echo "Content-Type: text/html"; echo ""; echo "<h1>Mudon Maung Maung Software Team</h1><h4>
+    Authentication Password for Partner Ledger Account</h4><p>Your Password is *** <b>{}</b> ***</p>
+    <br><i>Don't Share this password to anyone!!</i>") | /usr/sbin/sendmail -f yunyun.mdmm@gmail.com -F 
+    "MMM Software Team" {}""".format(pwd,mail)
+
+    # Execute the command
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+    # Check the command output and return code
+    if result.returncode == 0:
+        pass
+    else:
+        print("Command failed.")
+        print("Error:")
+        print(result.stderr)
+
 
 @auth.route("/")
 @auth.route("<atyp>")
 @auth.route("<atyp>/<mgs>")
 def authenticate(atyp='log',mgs=None):
+    session.pop('ledger_id', default=None)
+    session.pop('ledger_admin', default=None)    
     return render_template("authenticate.html",mgs=mgs,atyp = atyp)
+
+@auth.route('/delete-cookie-for-logout')
+def delete_cookie_for_logout():
+    print("session deleted")
+    session.pop('ledger_id', default=None)
+    session.pop('ledger_admin', default=None)
 
 @auth.route("handle-auth/<typ>",methods=['GET','POST'])
 def handle_auth(typ):
+    session.pop('ledger_id', default=None)
+    session.pop('ledger_admin', default=None)
     if request.method == 'POST':
         conn = db_connection()
         cur = conn.cursor()
@@ -34,13 +64,8 @@ def handle_auth(typ):
                 try:
                     decrypted_pwd = password_hash.A3Decryption().startDecryption(datas[0][0])
                     if decrypted_pwd == pwd:
-
-                        @after_this_request
-                        def after_index(response):
-                            response.set_cookie("code_id", code,expires=datetime.now() + timedelta(hours=1))
-                            response.set_cookie("admin",str(datas[0][1]),expires=datetime.now() + timedelta(hours=1))
-                            return response
-
+                        session['ledger_id'] = code
+                        session['ledger_admin'] = str(datas[0][1])
                         return redirect(url_for('views.all_partners'))
                 except:
                     pass
@@ -68,6 +93,7 @@ def handle_auth(typ):
             pwd = mix_string_with_random(u_name+code,len(code))
             try:
                 print(pwd)
+                # send_password_to_the_mail(mail,pwd)
                 encrypted_pwd = password_hash.A3Encryption().start_encryption(pwd,u_name)
                 cur.execute("""INSERT INTO user_auth (name,code,mail,pwd,ref_person) 
                             VALUES (%s,%s,%s,%s,%s)""",(u_name,code,mail,encrypted_pwd,ref)) 
@@ -86,12 +112,14 @@ def handle_auth(typ):
                     # sent email
                     pwd = mix_string_with_random(datas[0][1]+code,len(code))
                     print(pwd)
+                    # send_password_to_the_mail(mail,pwd)
                     encrypted_pwd = password_hash.A3Encryption().start_encryption(pwd,datas[0][1])
                     cur.execute("UPDATE user_auth SET pwd = %s WHERE code = %s",(encrypted_pwd,code))
                     conn.commit()
                     return redirect(url_for('auth.authenticate',atyp='log',mgs = "New Password is successfully sent to your mail.."))     
             return redirect(url_for('auth.authenticate',atyp=typ,mgs = "Employee Code or Reference Person doesn't match with your mail.."))
         elif typ == 'out':
+            respon = delete_cookie_for_logout()
             return redirect(url_for('auth.authenticate',atyp='log',mgs = "Successfully Logout!!"))  
 
         cur.close()

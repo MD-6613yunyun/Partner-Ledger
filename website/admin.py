@@ -1,10 +1,11 @@
-from flask import Blueprint, render_template,request
+from flask import Blueprint, render_template,request,redirect,url_for, session
 from website import db_connection,password_hash
 
 admin = Blueprint('admin',__name__)
 
 all_units = {}
 all_shops = {}
+all_users = []
 
 def get_all_data():
     global all_units,all_shops
@@ -18,16 +19,16 @@ def get_all_data():
     all_shops = {shop[0]:shop[1] for shop in shops}
 
 def get_all_users(cur):
+    global all_users
+    all_users = []
     cur.execute("""SELECT id,code,name,mail,admin,unit_code,shop_code FROM user_auth""")
     all_datas = cur.fetchall()
-    result = []
     for all_data in all_datas:
         units = all_data[5].split(",")
         shops = all_data[6].split(",")
         data = list(all_data[:5]) + [{key:value for key,value in all_units.items() if key in units},
                                 {key:value for key,value in all_shops.items() if key in shops}]
-        result.append(data)
-    return result
+        all_users.append(data)
 
 @admin.route("/")
 def admin_home_authenticate():
@@ -46,12 +47,13 @@ def admin_login():
             decrypted_pwd = password_hash.A3Decryption().startDecryption(data[0][0])
             if decrypted_pwd == pwd and data[0][1]:
                 get_all_data()
-                result = get_all_users(cur)
+                get_all_users(cur)
                 cur.close()
                 conn.close()
-                return render_template('admin.html',authenticate=True,result = result,all_units=all_units,all_shops=all_shops)
+                return render_template('admin.html',authenticate=True,result = all_users,all_units=all_units,all_shops=all_shops)
         cur.close()
         conn.close()
+        return redirect(url_for('auth.authenticate',atyp='log',mgs="Due to Authentication Failure of Admin Section , you must relogin..."))
     return render_template('admin.html')
 
 
@@ -68,11 +70,11 @@ def grant_rights():
         cur.execute(""" UPDATE user_auth SET unit_code = %s WHERE id = %s """,(','.join(selected_units),idd))
         cur.execute(""" UPDATE user_auth SET shop_code = %s WHERE id = %s """,(','.join(selected_shops),idd))
         conn.commit()
-        result = get_all_users(cur)
+        get_all_users(cur)
         
         cur.close()
         conn.close()
-        return render_template('admin.html',authenticate=True,result = result,all_units=all_units,all_shops=all_shops)
+        return render_template('admin.html',authenticate=True,result = all_users,all_units=all_units,all_shops=all_shops)
     return render_template('admin.html')
 
 @admin.route('/delUser',methods=['GET','POST'])
@@ -85,12 +87,13 @@ def delete_user():
 
         cur.execute(""" DELETE FROM user_auth WHERE id = %s""",(idd,))
         conn.commit()
-        result = get_all_users(cur)
+        get_all_users(cur)
         cur.close()
         conn.close()
-        if result == []:
+        if all_users == []:
             return render_template('admin.html')
-    return render_template('admin.html',authenticate=True,result = result,all_units=all_units,all_shops=all_shops)
+    
+    return render_template('admin.html',authenticate=True,result = all_users,all_units=all_units,all_shops=all_shops)
 
 @admin.route('/grantAdmin/<idd>/<bol>')
 def grand_admin_access(idd,bol):

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, request, url_for, send_file,redirect
+from flask import Blueprint, render_template, jsonify, request, url_for, send_file,redirect, session
 from website import db_connection
 from datetime import date,timedelta, datetime
 import xlsxwriter
@@ -35,15 +35,20 @@ def nani_home():
 def all_partners():
     conn = db_connection()
     cursor = conn.cursor()
-    code = request.cookies.get('code_id')
-    admin = request.cookies.get('admin')
+    if 'ledger_id' not in session or 'ledger_admin' not in session:
+        return redirect(url_for('auth.authenticate',typ='log'))
+    code = session['ledger_id']
+    admin = session['ledger_admin']
     if not code:
         return redirect(url_for('auth.authenticate'))
-    admins = [code,eval(admin)]
-    cursor.execute("SELECT unit_code,shop_code FROM user_auth WHERE code = %s",(code,))
-    datas = cursor.fetchall()
-    units_ids = [dt for dt in datas[0][0].split(",") if dt != '']
-    shops_ids = [dt for dt in datas[0][1].split(",") if dt != '']
+    cursor.execute("SELECT unit_code,shop_code,admin FROM user_auth WHERE code = %s;",(code,))
+    datas = cursor.fetchone()
+    if not datas:
+        return redirect(url_for('auth.authenticate'))
+    session['ledger_admin'] = datas[2]
+    admins = [code,datas[2]]
+    units_ids = [dt for dt in datas[0].split(",") if dt != '']
+    shops_ids = [dt for dt in datas[1].split(",") if dt != '']
     units,shops = [] , []
     if units_ids != []:
         cursor.execute("SELECT id,name FROM res_company WHERE id in %s",(tuple(units_ids),))
@@ -71,23 +76,26 @@ def get_data_all(variable:str):
     return jsonify(data)
 
 def get_each_journals(info,export=False):
-    pay,recv,post,draft,recon,pi,pc,shop,ownID,ptnID,rangeDate = info.split("@")
-    pay,recv,post,draft,pi,pc,shop,ownID,ptnID = eval(pay.capitalize()),eval(recv.capitalize()),eval(post.capitalize()),eval(draft.capitalize()),eval(pi), eval(pc), eval(shop),eval(ownID),eval(ptnID)
-    if pay and recv:
+    # pay@all@posted@39@@22@@@2023-12-01@2023-12-01
+    pay,recon,status,unit,pj_code,shop,owner,partner,start_date,end_date = info.split("@")
+    pi,pc,shop,ownID,ptnID = eval(unit), eval(pj_code), eval(shop),eval(owner),eval(partner)
+    # pay,recv,post,draft,recon,pi,pc,shop,ownID,ptnID,rangeDate = info.split("@")
+    # pay,recv,post,draft,pi,pc,shop,ownID,ptnID = eval(pay.capitalize()),eval(recv.capitalize()),eval(post.capitalize()),eval(draft.capitalize()),eval(pi), eval(pc), eval(shop),eval(ownID),eval(ptnID)
+    if pay == 'both':
         where_clause = "(aa.user_type_id = 1 or aa.user_type_id = 2) and "
     else:
-        if pay:
+        if pay == 'pay':
             where_clause = "aa.user_type_id = 2 and "
         else:
             where_clause = "aa.user_type_id = 1 and " 
-    if draft and post:
+    if status == 'both':
         where_clause += "acc.parent_state != 'cancel' and "
     else:
-        if draft:
+        if status == 'draft':
             where_clause += "acc.parent_state != 'posted' and acc.parent_state != 'cancel' and "
         else:
             where_clause += "acc.parent_state = 'posted' and " 
-    if recon == 'Only show unreconciled entries':
+    if recon == 'unreconciled':
         where_clause += "acc.full_reconcile_id is null and "
     if pi and pi[0] != '0':
         where_clause += f"acc.unit_id = {int(pi[0])} and "
@@ -100,19 +108,18 @@ def get_each_journals(info,export=False):
     if ptnID:
         where_clause += f"acc.partner_id = {ptnID} and "
 
-    end_date = date.today().strftime('%Y-%m-%d')
-    if rangeDate == 'Today':
-        start_date = date.today().strftime('%Y-%m-%d')
-    elif rangeDate == 'This week':
-        start_date = (date.today() - timedelta(days=date.today().weekday())).strftime('%Y-%m-%d')
-    elif rangeDate == 'This Month':
-        start_date = date.today().replace(day=1).strftime('%Y-%m-%d')
-    elif rangeDate == 'This Year':
-        start_date,end_date = get_financial_year_dates()
-    else:
-        dts = rangeDate.replace("~","/").split(" - ")
-        start_date = (datetime.strptime(dts[0], "%m/%d/%Y")).strftime("%Y-%m-%d")
-        end_date = (datetime.strptime(dts[1], "%m/%d/%Y")).strftime("%Y-%m-%d")
+    # end_date = date.today().strftime('%Y-%m-%d')
+    # if rangeDate == 'Today':
+    #     start_date = date.today().strftime('%Y-%m-%d')
+    # elif rangeDate == 'This week':
+    #     start_date = (date.today() - timedelta(days=date.today().weekday())).strftime('%Y-%m-%d')
+    # elif rangeDate == 'This Month':
+    #     start_date = date.today().replace(day=1).strftime('%Y-%m-%d')
+    # elif rangeDate == 'This Year':
+    #     start_date,end_date = get_financial_year_dates()
+    # else:
+    # start_date = (datetime.strptime(start_dt, "%Y/%m/%d")).strftime("%Y-%m-%d")
+    # end_date = (datetime.strptime(end_dt, "%Y/%m/%d")).strftime("%Y-%m-%d")
     
     conn = db_connection()
     cursor = conn.cursor()
