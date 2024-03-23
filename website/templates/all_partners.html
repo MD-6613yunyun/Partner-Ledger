@@ -29,7 +29,7 @@
                 <!-- print button section -->
                 <div class="print-btn-sec pb-1">
                     <button class="butn shadow-sm  rounded-0">
-                        <a class="nav-link" href="https://erp.mudonmaungmaung.com/web#action=515&model=account.journal&view_type=kanban&cids=1&menu_id=694">Back To Accounting</a>
+                       <a class="nav-link" href="https://bluesky.mudonmaungmaung.com/web#action=515&model=account.journal&view_type=kanban&cids=1&menu_id=694">Back To Accounting</a>
                     </button>
                     <button class="butn shadow-sm  rounded-0" type="button" onclick="getData(this,'normal')">Print Preview</button>
                     <button class="butn shadow-sm  rounded-0" type="button" onclick="getData(this,'excel')">Export(XLSX)</button>
@@ -99,14 +99,11 @@
                         <button class="btn btn-sm dropdown-toggle rounded-0" type="button" data-bs-toggle="dropdown" shopID="False" id="bi" aria-expanded="false">
                             Business Unit
                         </button>
-                        <div class="input-group rounded-0">
-                            <ul class="dropdown-menu  px-2 rounded-0" style="cursor: pointer;">
-                                <input type="search" placeholder="search" class="form-control rounded-0" onkeyup="getShops(this)"/>
-                                <div style="max-height: 150px;overflow-y: auto;display: none;">
-                                    {% for data in units %}
-                                        <p class="m-1 ms-2" shopID="['{{data[0]}}','{{data[1]}}']" value="['{{data[0]}}','{{data[1]}}']" onclick="assignShop(this)">{{data[1]}}</p>
-                                    {% endfor %}                               
-                                </div>
+                        <div class="input-group rounded-0" style="max-height: 500px;">
+                            <ul class="dropdown-menu  px-3 rounded-0 py-2"  style="cursor: pointer;max-height: 200px;overflow: auto;">
+                                {% for data in units %}
+                                    <small class="d-flex justify-content-between">{{data[1]}}<input type="checkbox" class="business-unit" shopID="['{{data[0]}}','{{data[1]}}']" value="['{{data[0]}}','{{data[1]}}']" onchange="assignShop(this)"></small>
+                                {% endfor %}
                             </ul>
                         </div>
                     </div>

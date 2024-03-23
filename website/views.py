@@ -81,6 +81,8 @@ def get_each_journals(info,export=False):
     pi,pc,shop,ownID,ptnID = eval(unit), eval(pj_code), eval(shop),eval(owner),eval(partner)
     # pay,recv,post,draft,recon,pi,pc,shop,ownID,ptnID,rangeDate = info.split("@")
     # pay,recv,post,draft,pi,pc,shop,ownID,ptnID = eval(pay.capitalize()),eval(recv.capitalize()),eval(post.capitalize()),eval(draft.capitalize()),eval(pi), eval(pc), eval(shop),eval(ownID),eval(ptnID)
+    multi_units = "["+unit+"]"
+    multi_units_lst = eval(multi_units)
     if pay == 'both':
         where_clause = "(aa.user_type_id = 1 or aa.user_type_id = 2) and "
     else:
@@ -98,7 +100,7 @@ def get_each_journals(info,export=False):
     if recon == 'unreconciled':
         where_clause += "acc.full_reconcile_id is null and "
     if pi and pi[0] != '0':
-        where_clause += f"acc.unit_id = {int(pi[0])} and "
+        where_clause += f"acc.unit_id in ({','.join([data[0] for data in multi_units_lst])})  and "
     if pc:
         where_clause += f"acc.project_code_id = {pc} and "
     if shop and shop[0] != '0':
@@ -139,6 +141,7 @@ def get_each_journals(info,export=False):
         LEFT JOIN account_payment ap ON (am.payment_id = ap.id )
     WHERE {} ORDER BY acc.partner_id, acc.date
     """
+    print(where_clause)
     query = query.format(fst_where_clause)
     cursor.execute(query)
     rows = cursor.fetchall()
@@ -217,7 +220,7 @@ def get_each_journals(info,export=False):
     final_result.update(dct)
     cursor.close()
     conn.close()
-    return final_result,start_date,end_date,shop,ownID,pi,["{0:,.2f} K".format(overallInit+var),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal+var)]
+    return final_result,start_date,end_date,shop,ownID,multi_units_lst,["{0:,.2f} K".format(overallInit+var),"{0:,.2f} K".format(overallDb),"{0:,.2f} K".format(overallCd),"{0:,.2f} K".format(overallBal+var)]
 
 def get_all_results(explict_tuple,where_clause):
     query = """
@@ -258,9 +261,7 @@ def get_table_data_for_excel_pdf(variable,pdf=False):
     rtn_data,start_dt,end_dt,shop,ownID,pi,overallList = get_each_journals(variable,export=True)
     owner = ""
     if pi:
-        pi = pi[1]
-        if "Auto Part" in pi:
-            pi = "AUTO PARTS SALES CENTER"
+        pi = '&'.join([data[1] for data in pi])
     if ownID:
         cursor.execute(f"SELECT id,name FROM res_partner_owner WHERE id = {ownID};")
         owners = cursor.fetchall()

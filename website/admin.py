@@ -20,15 +20,8 @@ def get_all_data():
 
 def get_all_users(cur):
     global all_users
-    all_users = []
     cur.execute("""SELECT id,code,name,mail,admin,unit_code,shop_code FROM user_auth""")
-    all_datas = cur.fetchall()
-    for all_data in all_datas:
-        units = all_data[5].split(",")
-        shops = all_data[6].split(",")
-        data = list(all_data[:5]) + [{key:value for key,value in all_units.items() if key in units},
-                                {key:value for key,value in all_shops.items() if key in shops}]
-        all_users.append(data)
+    all_users = cur.fetchall()
 
 @admin.route("/")
 def admin_home_authenticate():
@@ -60,15 +53,15 @@ def admin_login():
 @admin.route('/grant',methods=['GET','POST'])
 def grant_rights():
     if request.method == 'POST':
-        selected_units = request.form.getlist('unit-selects')
-        selected_shops = request.form.getlist('shop-selects')
+        selected_units = request.form.get("unit-list-input").strip(",")
+        selected_shops = request.form.get("shop-list-input").strip(",")
         idd = request.form.get('userID')
         get_all_data()
         conn = db_connection()
         cur = conn.cursor()
 
-        cur.execute(""" UPDATE user_auth SET unit_code = %s WHERE id = %s """,(','.join(selected_units),idd))
-        cur.execute(""" UPDATE user_auth SET shop_code = %s WHERE id = %s """,(','.join(selected_shops),idd))
+        cur.execute(""" UPDATE user_auth SET unit_code = %s WHERE id = %s """,(selected_units,idd))
+        cur.execute(""" UPDATE user_auth SET shop_code = %s WHERE id = %s """,(selected_shops,idd))
         conn.commit()
         get_all_users(cur)
         

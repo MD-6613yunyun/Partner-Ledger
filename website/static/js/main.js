@@ -36,19 +36,29 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
         }
     }
 
+    let businessUnits = []
     function assignShop(btn){
         if(btn.classList.contains("chooseOption")){
             console.log(btn.getAttribute("value"))
             btn.parentElement.previousElementSibling.previousElementSibling.value = btn.getAttribute("value")
             btn.parentElement.previousElementSibling.innerText = btn.innerText
+        }else if(btn.classList.contains("business-unit")){
+            let idd = btn.getAttribute('shopID')
+            if(btn.checked){
+                businessUnits.push(idd)
+            }else{
+                businessUnits.splice(businessUnits.indexOf(idd),1)
+            }
+            btn.parentElement.parentElement.parentElement.previousElementSibling.previousElementSibling.value = businessUnits
+            console.log(btn.parentElement.parentElement.parentElement.previousElementSibling.previousElementSibling.value)
         }else{
             let idd = btn.getAttribute('shopID')
             btn.parentElement.parentElement.parentElement.previousElementSibling.innerText = btn.innerText
             btn.parentElement.parentElement.parentElement.previousElementSibling.previousElementSibling.value = idd
             btn.parentElement.parentElement.parentElement.previousElementSibling.setAttribute('shopID',idd)
-            console.log(btn.parentElement.parentElement.parentElement.previousElementSibling.previousElementSibling.value)
+            console.log(btn.parentElement.parentElement.parentElement.previousElementSibling)
         }
-    }
+    }    
 
     function dateChange(btn){
         btn.parentElement.previousElementSibling.innerText = btn.innerText
@@ -96,7 +106,8 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
             alert("Owner must be chosen.If not specified ( chose no filter owner )")
         }else if (partner.value == ''){
             alert("Partner must be chosen.If not specified ( chose no filter partner )")
-        }else if ((owner.value != "" && owner.value != 'False ') && (partner.value != "" && partner.value != 'False')){
+        }else if ((owner.value != "" && owner.value != 'False') && (partner.value != "" && partner.value != 'False')){
+		console.log(owner.value,'owner',partner.value)
             alert("Report must not be filtered with both partner and owner.....")
         }else{
             let blurr = document.getElementById("partnerTable")
@@ -146,6 +157,7 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
                                                         <th class="text-start text-success" style="background-color: #EEEEEE;">Ref</th>
                                                         <th class="text-start text-success" style="background-color: #EEEEEE;">Due Date</th>
                                                         <th class="text-start text-success" style="background-color: #EEEEEE;">Matching</th>
+							<th class="text-start text-success" style="background-color: #EEEEEE;">Ex. Rate</th>
                                                         <th class="text-end text-success" style="background-color: #EEEEEE;">Initial Balance</th>
                                                         <th class="text-end text-success" style="background-color: #EEEEEE;">Debit</th>
                                                         <th class="text-end text-success" style="background-color: #EEEEEE;">Credit</th>
@@ -298,8 +310,30 @@ if (window.location.href.split('/')[3] == 'ledger-report'){
     modal.style.display = "none";
     }
 
-    function openForm(idd){
+    function openForm(idd,btn){
         inp = modal.getElementsByTagName('input')
+        let unitList = btn.getAttribute('unit-access-data').trim()
+        let shopList = btn.getAttribute('shop-access-data').trim()
+
+
+        unitList = unitList.split(",")
+        document.querySelectorAll("#selectBoxOne span").forEach(spann => {
+            if (unitList.includes(spann.getAttribute("value"))){
+                spann.nextElementSibling.checked = true;
+            }else{
+                spann.nextElementSibling.checked = false;
+            }
+        })
+
+        shopList = shopList.split(",")
+        document.querySelectorAll("#selectBoxTwo span").forEach(spann => {
+            if (shopList.includes(spann.getAttribute("value"))){
+                spann.nextElementSibling.checked = true;
+            }else{
+                spann.nextElementSibling.checked = false;
+            }
+        })   
+        
         inp[0].setAttribute('value',idd)
         modal.style.display = "block";
     }
@@ -320,6 +354,39 @@ function searchPartnerFromTable(inp){
             trRow.classList.remove("d-none")
         }else{
             trRow.classList.add("d-none")
+        }
+    })
+}
+
+
+function grantUser(btn){
+    const selectBoxOne = document.getElementById("selectBoxOne");
+    const selectBoxTwo = document.getElementById("selectBoxTwo");
+
+    const unitInput = document.getElementById("unit-list-input");
+    const shopInput = document.getElementById("shop-list-input");
+
+    for(let i = 0; i < selectBoxOne.querySelectorAll("input").length; i++){
+        if(selectBoxOne.querySelectorAll("input")[i].checked){
+           let idValue = selectBoxOne.querySelectorAll("input")[i].previousElementSibling.getAttribute("value");
+           unitInput.value += idValue + ","
+        }
+    }
+    for(let i = 0; i < selectBoxTwo.querySelectorAll("input").length; i++){
+        if(selectBoxTwo.querySelectorAll("input")[i].checked){
+           let idValue = selectBoxTwo.querySelectorAll("input")[i].previousElementSibling.getAttribute("value"); 
+           shopInput.value += idValue + ","
+        }
+    }
+    btn.submit();
+}
+
+function findUsers(inp){
+    document.querySelectorAll(".username").forEach(userr=>{
+        if(userr.textContent.toLowerCase().indexOf(inp.value) == -1){
+            userr.parentElement.classList.add("d-none")
+        }else{
+            userr.parentElement.classList.remove("d-none")
         }
     })
 }

@@ -18,15 +18,14 @@ def send_password_to_the_mail(mail,pwd):
     command = r"""(echo "Subject: Partner Ledger Account"; echo "MIME-Version: 1.0"; 
     echo "Content-Type: text/html"; echo ""; echo "<h1>Mudon Maung Maung Software Team</h1><h4>
     Authentication Password for Partner Ledger Account</h4><p>Your Password is *** <b>{}</b> ***</p>
-    <br><i>Don't Share this password to anyone!!</i>") | /usr/sbin/sendmail -f yunyun.mdmm@gmail.com -F 
-    "MMM Software Team" {}""".format(pwd,mail)
+    <br><i>Don't Share this password to anyone!!</i>") | /usr/sbin/sendmail -f mdmm.softwareteam@gmail.com -F   "MMM Software Team" {} -s "Partner Ledger Account Confirmation"  """.format(pwd,mail)
 
     # Execute the command
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
-
+    
     # Check the command output and return code
     if result.returncode == 0:
-        pass
+        print(command)
     else:
         print("Command failed.")
         print("Error:")
@@ -93,12 +92,13 @@ def handle_auth(typ):
             pwd = mix_string_with_random(u_name+code,len(code))
             try:
                 print(pwd)
-                # send_password_to_the_mail(mail,pwd)
+                send_password_to_the_mail(mail,pwd)
                 encrypted_pwd = password_hash.A3Encryption().start_encryption(pwd,u_name)
                 cur.execute("""INSERT INTO user_auth (name,code,mail,pwd,ref_person) 
                             VALUES (%s,%s,%s,%s,%s)""",(u_name,code,mail,encrypted_pwd,ref)) 
                 conn.commit()
-                return redirect(url_for('auth.authenticate',atyp='log'))
+                mgs = 'Account Credentials are succesfully sent to your email'
+                return redirect(url_for('auth.authenticate',atyp='log',mgs=mgs))
             except:
                 return redirect(url_for('auth.authenticate',atyp=typ,mgs = "Database Insertion Error"))                      
         elif typ == 'fog':
@@ -112,7 +112,7 @@ def handle_auth(typ):
                     # sent email
                     pwd = mix_string_with_random(datas[0][1]+code,len(code))
                     print(pwd)
-                    # send_password_to_the_mail(mail,pwd)
+                    send_password_to_the_mail(mail,pwd)
                     encrypted_pwd = password_hash.A3Encryption().start_encryption(pwd,datas[0][1])
                     cur.execute("UPDATE user_auth SET pwd = %s WHERE code = %s",(encrypted_pwd,code))
                     conn.commit()

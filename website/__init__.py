@@ -18,14 +18,12 @@ def create_app():
 
 def db_connection():
     # Database connection details
-    host = 'localhost'
-    # host = '0.tcp.ap.ngrok.io'
-    # host = '172.30.32.183'
+    host = 'mdmmdblive.cedwkdu1rp7w.ap-southeast-1.rds.amazonaws.com'
     port = '5432'  # Default PostgreSQL port
     # port = '15769'
-    database = 'odoo_14_uat'
-    user = 'postgres'
-    password = 'md-6613'
+    database = 'mmm_uat'
+    user = 'odoo'
+    password = 'vOa6DHSd58W4'
     
     # Establish the database connection
     try:
